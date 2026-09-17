@@ -40,15 +40,23 @@ public class User {
         return email;
     }
 
-    public void setEmail() {
+    public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPasswordHash(){
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public Role getRole() {
         return role;
     }
 
-    public void setRole() {
+    public void setRole(Role role) {
         this.role = role;
     }
 
