@@ -8,7 +8,15 @@ public class LoginResponseDTO {
         this.id = id;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }
