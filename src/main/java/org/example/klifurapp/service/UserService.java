@@ -1,4 +1,6 @@
 package org.example.klifurapp.service;
 
-public class UserService {
+public interface UserService {
+
+    void deleteUser(Long id);
 }
