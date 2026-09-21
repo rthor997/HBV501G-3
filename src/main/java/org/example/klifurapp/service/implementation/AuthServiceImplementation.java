@@ -2,6 +2,8 @@ package org.example.klifurapp.service.implementation;
 
 
 import org.example.klifurapp.DTO.user.CreateUserDTO;
+import org.example.klifurapp.DTO.user.LoginRequestDTO;
+import org.example.klifurapp.DTO.user.LoginResponseDTO;
 import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
@@ -38,5 +40,24 @@ public class AuthServiceImplementation implements AuthService {
         user.setRole(Role.USER);
 
         return userRepository.save(user);
+    }
+
+    @Override
+    public LoginResponseDTO authenticate(LoginRequestDTO dto) {
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Invalid email or password")
+                );
+
+        if (!user.getPasswordHash().equals(dto.getPassword())) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        LoginResponseDTO responseDto = new LoginResponseDTO();
+
+        responseDto.setEmail(user.getEmail());
+        responseDto.setId(user.getId());
+
+        return responseDto;
     }
 }
