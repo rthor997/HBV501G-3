@@ -8,15 +8,19 @@ import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.AuthService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthServiceImplementation implements AuthService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthServiceImplementation(
-            UserRepository userRepository){
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder){
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -32,7 +36,7 @@ public class AuthServiceImplementation implements AuthService {
 
         user.setUsername(dto.getUsername());
         user.setEmail(dto.getEmail());
-        user.setPasswordHash(dto.getPassword()); // mun breyta til að hafa passwordhasing
+        user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.USER);
 
         return userRepository.save(user);
