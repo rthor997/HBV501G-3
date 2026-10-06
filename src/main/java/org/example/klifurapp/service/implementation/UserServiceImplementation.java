@@ -14,11 +14,12 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    public void deleteUser(Long id) {
+    public boolean deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("User not found");
+            return false;
         }
 
         userRepository.deleteById(id);
+        return true;
     }
 }
