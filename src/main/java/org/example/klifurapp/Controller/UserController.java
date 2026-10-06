@@ -1,9 +1,7 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-import org.example.klifurapp.DTO.user.CreateUserDTO;
-import org.example.klifurapp.DTO.user.LoginRequestDTO;
-import org.example.klifurapp.DTO.user.LoginResponseDTO;
+import org.example.klifurapp.DTO.user.*;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
@@ -25,8 +23,8 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@Valid @RequestBody CreateUserDTO dto) {
-        return authService.register(dto);
+    public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserDTO dto) {
+        return ResponseEntity.ok(authService.register(dto));
     }
 
     @DeleteMapping("/{id}")
@@ -37,7 +35,14 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO dto) {
-        LoginResponseDTO responseDto = authService.authenticate(dto);
+        LoginResponseDTO responseDto = authService.login(dto);
         return ResponseEntity.ok(responseDto);
+    }
+
+    //TODO Nota session id í staðinn fyrir user id
+    @PostMapping("/user")
+    public ResponseEntity<UserDTO> getUser(@Valid @RequestBody FindUserDTO dto){
+        UserDTO userDto = userService.getUser(dto.getId());
+        return ResponseEntity.ok(userDto);
     }
 }

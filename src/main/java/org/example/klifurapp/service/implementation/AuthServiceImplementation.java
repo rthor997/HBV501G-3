@@ -43,7 +43,7 @@ public class AuthServiceImplementation implements AuthService {
     }
 
     @Override
-    public LoginResponseDTO authenticate(LoginRequestDTO dto) {
+    public LoginResponseDTO login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() ->
                         new IllegalArgumentException("Invalid email or password")
