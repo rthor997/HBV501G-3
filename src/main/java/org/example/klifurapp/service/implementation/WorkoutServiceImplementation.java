@@ -39,7 +39,7 @@ public class WorkoutServiceImplementation implements WorkoutService {
     @Override
     public boolean deleteWorkout(Long id) {
         if (!workoutRepository.existsById(id)) {
-            throw new IllegalArgumentException("User not found");
+            throw new IllegalArgumentException("Workout not found");
         }
 
         workoutRepository.deleteById(id);
