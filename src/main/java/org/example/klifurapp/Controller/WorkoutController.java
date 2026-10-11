@@ -22,4 +22,10 @@ public class WorkoutController {
         Workout savedWorkout = workoutService.logWorkout(dto);
         return ResponseEntity.ok(savedWorkout);
     }
+
+    @PostMapping
+    public ResponseEntity<Workout> editWorkout(@Valid @RequestBody LogWorkoutRequestDTO dto) {
+        Workout editedWorkout = workoutService.editWorkout(dto);
+        return ResponseEntity.ok(editedWorkout);
+    }
 }

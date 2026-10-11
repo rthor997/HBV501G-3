@@ -35,4 +35,13 @@ public class WorkoutServiceImplementation implements WorkoutService {
 
         return workoutRepository.save(workout);
     }
+
+    @Override
+    public Workout editWorkout(LogWorkoutRequestDTO dto) {
+
+
+        return null;
+    }
+
+
 }
