@@ -22,4 +22,10 @@ public class WorkoutController {
         Workout savedWorkout = workoutService.logWorkout(dto);
         return ResponseEntity.ok(savedWorkout);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Boolean> deleteLoggedWorkout(@PathVariable Long id) {
+        workoutService.deleteWorkout(id);
+        return ResponseEntity.noContent().build();
+    }
 }
