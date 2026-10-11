@@ -2,5 +2,5 @@ package org.example.klifurapp.service;
 
 public interface UserService {
 
-    boolean deleteUser(Long id);
+    void deleteUser(Long id);
 }
