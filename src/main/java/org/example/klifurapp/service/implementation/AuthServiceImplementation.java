@@ -49,7 +49,7 @@ public class AuthServiceImplementation implements AuthService {
                         new IllegalArgumentException("Invalid email or password")
                 );
 
-        if (!user.getPasswordHash().equals(dto.getPassword())) {
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid email or password");
         }
 

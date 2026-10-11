@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.user.CreateUserDTO;
 import org.example.klifurapp.DTO.user.LoginRequestDTO;
 import org.example.klifurapp.DTO.user.LoginResponseDTO;
+import org.example.klifurapp.DTO.user.UpdateUserDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
@@ -30,9 +31,9 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("User successfully deleted");
     }
 
     @PostMapping("/login")
@@ -40,4 +41,12 @@ public class UserController {
         LoginResponseDTO responseDto = authService.authenticate(dto);
         return ResponseEntity.ok(responseDto);
     }
+
+    @PutMapping("/{id}")
+    public User updateUser(
+            @PathVariable Long id,
+            @RequestBody UpdateUserDTO dto) {
+        return userService.updateUser(id, dto);
+    }
+
 }
