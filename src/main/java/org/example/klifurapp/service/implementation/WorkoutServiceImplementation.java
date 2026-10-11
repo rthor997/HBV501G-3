@@ -35,4 +35,15 @@ public class WorkoutServiceImplementation implements WorkoutService {
 
         return workoutRepository.save(workout);
     }
+
+    @Override
+    public boolean deleteWorkout(Long id) {
+        if (!workoutRepository.existsById(id)) {
+            throw new IllegalArgumentException("Workout not found");
+        }
+
+        workoutRepository.deleteById(id);
+
+        return !workoutRepository.existsById(id);
+    }
 }

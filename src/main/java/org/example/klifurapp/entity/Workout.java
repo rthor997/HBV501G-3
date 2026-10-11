@@ -12,7 +12,7 @@ public class Workout {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private User user;  
 
     @Column(nullable = false)
     private String exerciseName;
