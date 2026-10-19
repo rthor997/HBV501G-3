@@ -8,7 +8,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false) // auka reglur bara er unique og ekki null
+    @Column(unique = true, nullable = false)
     private String username;
 
     @Column(unique = true, nullable = false)
