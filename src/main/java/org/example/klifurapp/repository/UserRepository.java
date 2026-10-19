@@ -1,6 +1,6 @@
 package org.example.klifurapp.repository;
+
 import org.example.klifurapp.entity.User;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.jpa.repository.JpaRepository;
 
