@@ -1,14 +1,11 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-<<<<<<< HEAD
 import org.example.klifurapp.DTO.user.*;
-=======
 import org.example.klifurapp.DTO.user.CreateUserDTO;
 import org.example.klifurapp.DTO.user.LoginRequestDTO;
 import org.example.klifurapp.DTO.user.LoginResponseDTO;
 import org.example.klifurapp.DTO.user.UpdateUserDTO;
->>>>>>> origin/main
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
@@ -46,20 +43,16 @@ public class UserController {
         return ResponseEntity.ok(responseDto);
     }
 
-<<<<<<< HEAD
     //TODO Nota session id í staðinn fyrir user id
     @PostMapping("/user")
     public ResponseEntity<UserDTO> getUser(@Valid @RequestBody FindUserDTO dto){
         UserDTO userDto = userService.getUser(dto.getId());
         return ResponseEntity.ok(userDto);
     }
-=======
     @PutMapping("/{id}")
     public User updateUser(
             @PathVariable Long id,
             @RequestBody UpdateUserDTO dto) {
         return userService.updateUser(id, dto);
     }
-
->>>>>>> origin/main
 }
