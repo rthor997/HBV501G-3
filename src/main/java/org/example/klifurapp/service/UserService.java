@@ -1,11 +1,8 @@
 package org.example.klifurapp.service;
 
-<<<<<<< HEAD
 import org.example.klifurapp.DTO.user.UserDTO;
-=======
 import org.example.klifurapp.DTO.user.UpdateUserDTO;
 import org.example.klifurapp.entity.User;
->>>>>>> origin/main
 
 public interface UserService {
 

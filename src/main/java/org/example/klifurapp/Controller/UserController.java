@@ -55,4 +55,5 @@ public class UserController {
             @RequestBody UpdateUserDTO dto) {
         return userService.updateUser(id, dto);
     }
+
 }

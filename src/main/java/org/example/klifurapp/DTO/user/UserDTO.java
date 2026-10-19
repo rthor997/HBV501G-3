@@ -3,7 +3,6 @@ package org.example.klifurapp.DTO.user;
 public class UserDTO {
     private String email;
     private String username;
-    private String password;
 
     public String getEmail() {
         return email;
@@ -13,9 +12,6 @@ public class UserDTO {
         return username;
     }
 
-    public String getPassword() {
-        return password;
-    }
 
     public void setEmail(String email) {
         this.email = email;
@@ -25,7 +21,4 @@ public class UserDTO {
         this.username = username;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
 }
