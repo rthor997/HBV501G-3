@@ -2,6 +2,7 @@ package org.example.klifurapp.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "climbs")
@@ -30,6 +31,8 @@ public class Climb {
 
     @Enumerated(EnumType.STRING)
     private WallIncline wallIncline;
+
+    private LocalDateTime timeOfLog;
 
     public Climb() {
     }
@@ -84,5 +87,13 @@ public class Climb {
 
     public void setWallIncline(WallIncline wallIncline) {
         this.wallIncline = wallIncline;
+    }
+
+    public LocalDateTime getTimeOfLog() {
+        return timeOfLog;
+    }
+
+    public void setTimeOfLog(LocalDateTime timeOfLog) {
+        this.timeOfLog = timeOfLog;
     }
 }

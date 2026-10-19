@@ -2,6 +2,9 @@ package org.example.klifurapp.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "workouts")
 public class Workout {
@@ -21,6 +24,7 @@ public class Workout {
     private Integer repetitions;
     private Double weight;
     private Integer durationMinutes;
+    private LocalDateTime timeOfLog;
 
     public Workout() {
     }
@@ -79,5 +83,13 @@ public class Workout {
 
     public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
+    }
+
+    public LocalDateTime getTimeOfLog() {
+        return timeOfLog;
+    }
+
+    public void setTimeOfLog(LocalDateTime timeOfLog) {
+        this.timeOfLog = timeOfLog;
     }
 }
