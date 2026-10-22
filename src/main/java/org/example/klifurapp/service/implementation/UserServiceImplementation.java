@@ -7,6 +7,7 @@ import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImplementation implements UserService {
@@ -35,12 +36,14 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("User not found, ID mismatch");
-        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found, ID mismatch")
+                );
 
-        userRepository.deleteById(id);
+        userRepository.delete(user);
     }
 
     @Override
