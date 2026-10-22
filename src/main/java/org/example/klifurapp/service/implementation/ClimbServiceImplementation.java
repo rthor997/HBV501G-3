@@ -47,8 +47,8 @@ public class ClimbServiceImplementation implements ClimbService {
 
     private void validateGrade(GradingSystem system, String grade) {
         boolean valid = switch (system) {
-            case V_SCALE -> grade.matches("V(0|[1-9][0-9]*)\\+?");
-            case FONT -> grade.matches("[3-9][ABC]\\+?");
+            case V_SCALE -> grade.matches("VB|V0[+-]?|V([1-9]|1[0-9])");
+            case FONT -> grade.matches("3|[4-5][+-]?|[6-9][ABC]\\+?");
         };
 
         if (!valid) {
