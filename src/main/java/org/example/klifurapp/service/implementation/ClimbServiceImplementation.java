@@ -7,7 +7,9 @@ import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ClimbServiceImplementation implements ClimbService {
@@ -26,8 +28,9 @@ public class ClimbServiceImplementation implements ClimbService {
     public Climb createClimb(CreateClimbDTO dto) {
 
         User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"
+                ));
 
         validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
         Climb climb = new Climb();
@@ -45,12 +48,13 @@ public class ClimbServiceImplementation implements ClimbService {
     private void validateGrade(GradingSystem system, String grade) {
         boolean valid = switch (system) {
             case V_SCALE -> grade.matches("V(0|[1-9][0-9]*)\\+?");
-            case FONT -> grade.matches("(3|4|5|6|7|8|9)[ABCabc]?\\+?");
+            case FONT -> grade.matches("[3-9][ABC]\\+?");
         };
 
         if (!valid) {
-            throw new IllegalArgumentException(
-                    "Invalid grade for grading system: " + system
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid difficulty grade for " + system
             );
         }
     }

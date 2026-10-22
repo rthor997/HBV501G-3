@@ -1,6 +1,7 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
+import org.example.klifurapp.DTO.workout.EditWorkoutRequestDTO;
 import org.example.klifurapp.DTO.workout.LogWorkoutRequestDTO;
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.service.WorkoutService;
