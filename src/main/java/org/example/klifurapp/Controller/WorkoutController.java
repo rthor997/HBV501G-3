@@ -1,6 +1,7 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
+import org.example.klifurapp.DTO.workout.EditWorkoutRequestDTO;
 import org.example.klifurapp.DTO.workout.LogWorkoutRequestDTO;
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.service.WorkoutService;
@@ -27,5 +28,14 @@ public class WorkoutController {
     public ResponseEntity<Boolean> deleteLoggedWorkout(@PathVariable Long id) {
         workoutService.deleteWorkout(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Workout> updateWorkout(
+            @PathVariable Long id, 
+            @Valid @RequestBody EditWorkoutRequestDTO dto) {
+    
+        Workout updatedWorkout = workoutService.updateWorkout(id, dto);
+        return ResponseEntity.ok(updatedWorkout);
     }
 }

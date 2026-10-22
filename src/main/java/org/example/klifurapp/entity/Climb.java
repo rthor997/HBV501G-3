@@ -18,7 +18,10 @@ public class Climb {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private DifficultyGrade difficultyGrade;
+    private GradingSystem gradingSystem;
+
+    @Column(nullable = false)
+    private String difficultyGrade;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -49,11 +52,11 @@ public class Climb {
         this.user = user;
     }
 
-    public DifficultyGrade getDifficultyGrade() {
+    public String getDifficultyGrade() {
         return difficultyGrade;
     }
 
-    public void setDifficultyGrade(DifficultyGrade difficultyGrade) {
+    public void setDifficultyGrade(String difficultyGrade) {
         this.difficultyGrade = difficultyGrade;
     }
 
@@ -63,6 +66,14 @@ public class Climb {
 
     public void setClimbingStyle(ClimbingStyle climbingStyle) {
         this.climbingStyle = climbingStyle;
+    }
+
+    public GradingSystem getGradingSystem() {
+        return gradingSystem;
+    }
+
+    public void setGradingSystem(GradingSystem gradingSystem) {
+        this.gradingSystem = gradingSystem;
     }
 
     public LocalDate getDate() {
