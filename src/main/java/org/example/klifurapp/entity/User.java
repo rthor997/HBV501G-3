@@ -1,5 +1,7 @@
 package org.example.klifurapp.entity;
 import  jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -19,6 +21,18 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.REMOVE
+    )
+    private List<Climb> climbs = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.REMOVE
+    )
+    private List<Workout> workouts = new ArrayList<>();
 
     public  User() {
 
