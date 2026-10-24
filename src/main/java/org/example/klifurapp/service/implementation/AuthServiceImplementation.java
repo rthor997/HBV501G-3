@@ -8,6 +8,7 @@ import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.AuthService;
+import org.example.klifurapp.service.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +16,16 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImplementation implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+
 
     public AuthServiceImplementation(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder){
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -52,11 +57,12 @@ public class AuthServiceImplementation implements AuthService {
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid email or password");
         }
-
+        String token = jwtService.generateToken(user);
         LoginResponseDTO responseDto = new LoginResponseDTO();
 
         responseDto.setEmail(user.getEmail());
         responseDto.setId(user.getId());
+        responseDto.setToken(token);
 
         return responseDto;
     }
