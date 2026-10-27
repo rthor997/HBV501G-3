@@ -61,7 +61,6 @@ public class AuthServiceImplementation implements AuthService {
         LoginResponseDTO responseDto = new LoginResponseDTO();
 
         responseDto.setEmail(user.getEmail());
-        responseDto.setId(user.getId());
         responseDto.setToken(token);
 
         return responseDto;

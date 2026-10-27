@@ -25,13 +25,12 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
-    public Climb createClimb(CreateClimbDTO dto) {
+    public Climb createClimb(CreateClimbDTO dto, Long userId) {
 
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"
-                ));
-
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found")
+                );
         validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
         Climb climb = new Climb();
         climb.setUser(user);

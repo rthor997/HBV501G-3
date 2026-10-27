@@ -5,5 +5,5 @@ import org.example.klifurapp.entity.Climb;
 
 public interface ClimbService {
 
-    Climb createClimb(CreateClimbDTO dto);
+    Climb createClimb(CreateClimbDTO dto, Long userId);
 }

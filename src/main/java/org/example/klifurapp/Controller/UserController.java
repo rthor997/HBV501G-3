@@ -11,6 +11,7 @@ import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,36 +25,42 @@ public class UserController {
         this.userService = userService;
         this.authService = authService;
     }
-
+    //public endpoint
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserDTO dto) {
         return ResponseEntity.ok(authService.register(dto));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    @DeleteMapping("/me")
+    public ResponseEntity<String> deleteUser(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        userService.deleteUser(userId);
         return ResponseEntity.ok("User successfully deleted");
     }
-
+    // public endpoint
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO dto) {
         LoginResponseDTO responseDto = authService.login(dto);
         return ResponseEntity.ok(responseDto);
     }
 
-    //TODO Nota session id í staðinn fyrir user id
-    @PostMapping("/user")
-    public ResponseEntity<UserDTO> getUser(@Valid @RequestBody FindUserDTO dto){
-        UserDTO userDto = userService.getUser(dto.getId());
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getUser(Authentication authentication){
+        Long userId = (Long) authentication.getPrincipal();
+        UserDTO userDto = userService.getUser(userId);
         return ResponseEntity.ok(userDto);
     }
-    @PutMapping("/{id}")
-    public User updateUser(
-            @PathVariable Long id,
-            @RequestBody UpdateUserDTO dto) {
-        return userService.updateUser(id, dto);
+    @PutMapping("/me")
+    public ResponseEntity<User> updateUser(
+            @RequestBody UpdateUserDTO dto,
+            Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
+
+        User updatedUser = userService.updateUser(userId, dto);
+
+        return ResponseEntity.ok(updatedUser);
     }
 
 }

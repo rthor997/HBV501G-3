@@ -1,7 +1,6 @@
 package org.example.klifurapp.DTO.user;
 
 public class LoginResponseDTO {
-    private long id;
     private String email;
     private String token;
 
@@ -11,10 +10,6 @@ public class LoginResponseDTO {
     }
 
     public LoginResponseDTO() {
-    }
-
-    public long getId() {
-        return id;
     }
 
     public String getEmail() {
@@ -27,10 +22,6 @@ public class LoginResponseDTO {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public void setId(long id) {
-        this.id = id;
     }
 
     public void setToken(String token) {
