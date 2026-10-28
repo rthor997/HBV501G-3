@@ -1,5 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.DTO.climb.ClimbResponseDTO;
 import org.example.klifurapp.DTO.climb.CreateClimbDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.GradingSystem;
@@ -9,7 +10,10 @@ import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 public class ClimbServiceImplementation implements ClimbService {
@@ -57,5 +61,30 @@ public class ClimbServiceImplementation implements ClimbService {
                     "Invalid difficulty grade for " + system
             );
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClimbResponseDTO> getClimbsByUserId(Long userId) {
+
+        if (!userRepository.existsById(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "User not found"
+            );
+        }
+
+        return climbRepository.findByUserIdOrderByDateDesc(userId)
+                .stream()
+                .map(climb -> new ClimbResponseDTO(
+                        climb.getId(),
+                        climb.getGradingSystem(),
+                        climb.getDifficultyGrade(),
+                        climb.getClimbingStyle(),
+                        climb.getDate(),
+                        climb.getNotes(),
+                        climb.getWallIncline()
+                ))
+                .toList();
     }
 }
