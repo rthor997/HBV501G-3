@@ -38,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequestDTO dto) {
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
         LoginResponseDTO responseDto = authService.login(dto);
         return ResponseEntity.ok(responseDto);
     }
@@ -49,11 +49,11 @@ public class UserController {
         UserDTO userDto = userService.getUser(dto.getId());
         return ResponseEntity.ok(userDto);
     }
+
     @PutMapping("/{id}")
     public User updateUser(
             @PathVariable Long id,
             @RequestBody UpdateUserDTO dto) {
         return userService.updateUser(id, dto);
     }
-
 }
