@@ -48,6 +48,25 @@ public class AuthServiceImplementation implements AuthService {
     }
 
     @Override
+    public User createAdmin(CreateUserDTO dto) {
+        if(userRepository.findByUsername(dto.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username is already taken");
+        }
+
+        if(userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already registered");
+        }
+
+        User admin = new User();
+
+        admin.setUsername(dto.getUsername());
+        admin.setEmail(dto.getEmail());
+        admin.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        admin.setRole(Role.ADMIN);
+        return userRepository.save(admin);
+    }
+
+    @Override
     public LoginResponseDTO login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() ->

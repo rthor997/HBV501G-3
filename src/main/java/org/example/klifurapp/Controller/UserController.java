@@ -11,6 +11,7 @@ import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,15 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserDTO dto) {
         return ResponseEntity.ok(authService.register(dto));
+    }
+
+    // creates a new account if you're an admin
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> createAdmin(
+            @Valid @RequestBody CreateUserDTO dto) {
+        User admin = authService.createAdmin(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(admin);
     }
 
     @DeleteMapping("/me")
