@@ -1,9 +1,9 @@
 package org.example.klifurapp.service.implementation;
 
 
-import org.example.klifurapp.DTO.user.CreateUserDTO;
-import org.example.klifurapp.DTO.user.LoginRequestDTO;
-import org.example.klifurapp.DTO.user.LoginResponseDTO;
+import org.example.klifurapp.DTO.requests.CreateUserRequestDTO;
+import org.example.klifurapp.DTO.requests.LoginRequestDTO;
+import org.example.klifurapp.DTO.responses.LoginResponseDTO;
 import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
@@ -24,7 +24,7 @@ public class AuthServiceImplementation implements AuthService {
     }
 
     @Override
-    public User register(CreateUserDTO dto) {
+    public User register(CreateUserRequestDTO dto) {
         if(userRepository.findByUsername(dto.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username is already taken");
         }

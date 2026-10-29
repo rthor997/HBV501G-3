@@ -1,11 +1,14 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-import org.example.klifurapp.DTO.workout.LogWorkoutRequestDTO;
+import org.example.klifurapp.DTO.requests.LogWorkoutRequestDTO;
+import org.example.klifurapp.DTO.requests.EditWorkoutRequestDTO; // Passa að hafa þetta
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.service.WorkoutService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal; // Nýja importið fyrir JWT
 
 @RestController
 @RequestMapping("/api/workouts")
@@ -18,8 +21,13 @@ public class WorkoutController {
     }
 
     @PostMapping
-    public ResponseEntity<Workout> logWorkout(@Valid @RequestBody LogWorkoutRequestDTO dto) {
-        Workout savedWorkout = workoutService.logWorkout(dto);
+    public ResponseEntity<Workout> logWorkout(
+            @Valid @RequestBody LogWorkoutRequestDTO dto,
+            Principal principal) {
+
+        String userEmail = principal.getName();
+
+        Workout savedWorkout = workoutService.logWorkout(userEmail, dto);
         return ResponseEntity.ok(savedWorkout);
     }
 
@@ -31,9 +39,9 @@ public class WorkoutController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Workout> updateWorkout(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @Valid @RequestBody EditWorkoutRequestDTO dto) {
-    
+
         Workout updatedWorkout = workoutService.updateWorkout(id, dto);
         return ResponseEntity.ok(updatedWorkout);
     }

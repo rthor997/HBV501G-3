@@ -1,9 +1,9 @@
-package org.example.klifurapp.DTO.user;
+package org.example.klifurapp.DTO.requests;
 
 import jakarta.validation.constraints.NotBlank;
 
 // client sendir bara username, email og password ekki id, role og passwordhash
-public class CreateUserDTO {
+public class CreateUserRequestDTO {
 
     @NotBlank
     private String username;

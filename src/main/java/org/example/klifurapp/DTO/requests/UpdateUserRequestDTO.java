@@ -1,6 +1,6 @@
-package org.example.klifurapp.DTO.user;
+package org.example.klifurapp.DTO.requests;
 
-public class UpdateUserDTO {
+public class UpdateUserRequestDTO {
     private String username;
     private String password;
 

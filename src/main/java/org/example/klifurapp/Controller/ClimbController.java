@@ -1,7 +1,7 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-import org.example.klifurapp.DTO.climb.CreateClimbDTO;
+import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.service.ClimbService;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,7 @@ public class ClimbController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Climb createClimb(@Valid @RequestBody CreateClimbDTO dto) {
+    public Climb createClimb(@Valid @RequestBody CreateClimbRequestDTO dto) {
         return climbService.createClimb(dto);
     }
 }

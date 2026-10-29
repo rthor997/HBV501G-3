@@ -1,6 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
-import org.example.klifurapp.DTO.climb.CreateClimbDTO;
+import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.ClimbRepository;
@@ -22,7 +22,7 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
-    public Climb createClimb(CreateClimbDTO dto) {
+    public Climb createClimb(CreateClimbRequestDTO dto) {
 
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() ->

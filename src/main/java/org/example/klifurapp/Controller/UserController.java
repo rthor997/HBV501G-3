@@ -1,11 +1,11 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-import org.example.klifurapp.DTO.user.*;
-import org.example.klifurapp.DTO.user.CreateUserDTO;
-import org.example.klifurapp.DTO.user.LoginRequestDTO;
-import org.example.klifurapp.DTO.user.LoginResponseDTO;
-import org.example.klifurapp.DTO.user.UpdateUserDTO;
+import org.example.klifurapp.DTO.responses.UserResponseDTO;
+import org.example.klifurapp.DTO.requests.CreateUserRequestDTO;
+import org.example.klifurapp.DTO.requests.LoginRequestDTO;
+import org.example.klifurapp.DTO.responses.LoginResponseDTO;
+import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
@@ -27,7 +27,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserDTO dto) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserRequestDTO dto) {
         return ResponseEntity.ok(authService.register(dto));
     }
 
@@ -43,16 +43,15 @@ public class UserController {
         return ResponseEntity.ok(responseDto);
     }
 
-    //TODO Nota session id í staðinn fyrir user id
-    @PostMapping("/user")
-    public ResponseEntity<UserDTO> getUser(@Valid @RequestBody FindUserDTO dto){
-        UserDTO userDto = userService.getUser(dto.getId());
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable Long id){
+        UserResponseDTO userDto = userService.getUser(id);
         return ResponseEntity.ok(userDto);
     }
     @PutMapping("/{id}")
     public User updateUser(
             @PathVariable Long id,
-            @RequestBody UpdateUserDTO dto) {
+            @RequestBody UpdateUserRequestDTO dto) {
         return userService.updateUser(id, dto);
     }
 

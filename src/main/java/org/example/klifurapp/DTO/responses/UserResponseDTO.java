@@ -1,6 +1,6 @@
-package org.example.klifurapp.DTO.user;
+package org.example.klifurapp.DTO.responses;
 
-public class UserDTO {
+public class UserResponseDTO {
     private String email;
     private String username;
 

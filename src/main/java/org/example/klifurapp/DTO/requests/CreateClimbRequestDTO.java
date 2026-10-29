@@ -1,4 +1,4 @@
-package org.example.klifurapp.DTO.climb;
+package org.example.klifurapp.DTO.requests;
 
 import jakarta.validation.constraints.NotNull;
 import org.example.klifurapp.entity.ClimbingStyle;
@@ -7,7 +7,7 @@ import org.example.klifurapp.entity.WallIncline;
 
 import java.time.LocalDate;
 
-public class CreateClimbDTO {
+public class CreateClimbRequestDTO {
 
     @NotNull
     private Long userId;

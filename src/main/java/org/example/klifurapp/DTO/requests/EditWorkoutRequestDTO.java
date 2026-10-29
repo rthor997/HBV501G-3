@@ -1,4 +1,4 @@
-package org.example.klifurapp.DTO.workout;
+package org.example.klifurapp.DTO.requests;
 
 import jakarta.validation.constraints.NotBlank;
 
