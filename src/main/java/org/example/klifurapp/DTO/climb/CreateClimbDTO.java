@@ -11,9 +11,6 @@ import java.time.LocalDate;
 public class CreateClimbDTO {
 
     @NotNull
-    private Long userId;
-
-    @NotNull
     private GradingSystem gradingSystem;
 
     @NotBlank
@@ -28,14 +25,6 @@ public class CreateClimbDTO {
     private String notes;
 
     private WallIncline wallIncline;
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
 
     public GradingSystem getGradingSystem() {
         return gradingSystem;

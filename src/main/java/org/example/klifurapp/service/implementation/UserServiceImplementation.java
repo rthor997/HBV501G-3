@@ -47,7 +47,7 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    public User updateUser(long id, UpdateUserDTO dto) {
+    public User updateUser(Long id, UpdateUserDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(()->
                         new IllegalArgumentException("User Not Found")
