@@ -6,6 +6,7 @@ import org.example.klifurapp.DTO.workout.EditWorkoutRequestDTO;
 import org.example.klifurapp.DTO.workout.LogWorkoutRequestDTO;
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.service.WorkoutService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +22,18 @@ public class WorkoutController {
     }
 
     @PostMapping
-    public ResponseEntity<Workout> logWorkout(@Valid @RequestBody LogWorkoutRequestDTO dto, Authentication authentication) {
+    public ResponseEntity<Workout> logWorkout(
+            @Valid @RequestBody LogWorkoutRequestDTO dto,
+            Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         Workout savedWorkout = workoutService.logWorkout(dto, userId);
-        return ResponseEntity.ok(savedWorkout);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedWorkout);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteLoggedWorkout(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Void> deleteLoggedWorkout(
+            @PathVariable Long id,
+            Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         workoutService.deleteWorkout(id, userId);
         return ResponseEntity.noContent().build();

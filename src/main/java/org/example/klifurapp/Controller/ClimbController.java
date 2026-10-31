@@ -22,10 +22,12 @@ public class ClimbController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Climb createClimb(@Valid @RequestBody CreateClimbDTO dto, Authentication authentication) {
+    public ResponseEntity<Climb> createClimb(
+            @Valid @RequestBody CreateClimbDTO dto,
+            Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        return climbService.createClimb(dto, userId);
+        Climb climb = climbService.createClimb(dto, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(climb);
     }
 
     @PutMapping("/admin/{climbId}")

@@ -28,9 +28,9 @@ public class UserController {
     }
     //public endpoint
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserDTO dto) {
-        return ResponseEntity.ok(authService.register(dto));
+        User user = authService.register(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     // creates a new account if you're an admin
@@ -46,7 +46,7 @@ public class UserController {
     public ResponseEntity<String> deleteUser(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         userService.deleteUser(userId);
-        return ResponseEntity.ok("User successfully deleted");
+        return ResponseEntity.noContent().build();
     }
     // public endpoint
     @PostMapping("/login")
