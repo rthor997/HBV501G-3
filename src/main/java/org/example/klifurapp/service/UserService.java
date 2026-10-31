@@ -1,5 +1,6 @@
 package org.example.klifurapp.service;
 
+import org.example.klifurapp.DTO.user.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.user.UserDTO;
 import org.example.klifurapp.DTO.user.UpdateUserDTO;
 import org.example.klifurapp.entity.User;
@@ -10,4 +11,5 @@ public interface UserService {
     void deleteUser(Long id);
 
     User updateUser(Long id, UpdateUserDTO dto);
+    User updateUserAsAdmin(Long id, AdminUpdateUserDTO dto);
 }
