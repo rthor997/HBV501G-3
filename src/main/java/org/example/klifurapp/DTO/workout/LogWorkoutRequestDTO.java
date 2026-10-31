@@ -1,12 +1,9 @@
 package org.example.klifurapp.DTO.workout;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class LogWorkoutRequestDTO {
   
-    @NotNull
-    private Long userId;
 
     @NotBlank
     private String exerciseName;
@@ -16,13 +13,6 @@ public class LogWorkoutRequestDTO {
     private Double weight;
     private Integer durationMinutes;
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
 
     public String getExerciseName() {
         return exerciseName;
