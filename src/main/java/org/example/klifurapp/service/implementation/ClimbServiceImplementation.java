@@ -12,8 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class ClimbServiceImplementation implements ClimbService {
@@ -65,7 +65,8 @@ public class ClimbServiceImplementation implements ClimbService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClimbResponseDTO> getClimbsByUserId(Long userId) {
+    public Page<ClimbResponseDTO> getClimbsByUserId(
+            Long userId, Pageable pageable) {
 
         if (!userRepository.existsById(userId)) {
             throw new ResponseStatusException(
@@ -74,8 +75,7 @@ public class ClimbServiceImplementation implements ClimbService {
             );
         }
 
-        return climbRepository.findByUserIdOrderByDateDesc(userId)
-                .stream()
+        return climbRepository.findByUserId(userId, pageable)
                 .map(climb -> new ClimbResponseDTO(
                         climb.getId(),
                         climb.getGradingSystem(),
@@ -84,7 +84,6 @@ public class ClimbServiceImplementation implements ClimbService {
                         climb.getDate(),
                         climb.getNotes(),
                         climb.getWallIncline()
-                ))
-                .toList();
+                ));
     }
 }

@@ -3,12 +3,12 @@ package org.example.klifurapp.service;
 import org.example.klifurapp.DTO.climb.ClimbResponseDTO;
 import org.example.klifurapp.DTO.climb.CreateClimbDTO;
 import org.example.klifurapp.entity.Climb;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ClimbService {
 
     Climb createClimb(CreateClimbDTO dto);
 
-    List<ClimbResponseDTO> getClimbsByUserId(Long userId);
+    Page<ClimbResponseDTO> getClimbsByUserId(Long userId, Pageable pageable);
 }
