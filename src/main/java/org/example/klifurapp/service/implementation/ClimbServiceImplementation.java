@@ -1,5 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.DTO.climb.ClimbResponseDTO;
 import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.climb.CreateClimbDTO;
 import org.example.klifurapp.entity.Climb;
@@ -10,7 +11,10 @@ import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class ClimbServiceImplementation implements ClimbService {
@@ -60,6 +64,27 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<ClimbResponseDTO> getClimbsByUserId(
+            Long userId, Pageable pageable) {
+
+        if (!userRepository.existsById(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "User not found"
+            );
+        }
+
+        return climbRepository.findByUserId(userId, pageable)
+                .map(climb -> new ClimbResponseDTO(
+                        climb.getId(),
+                        climb.getGradingSystem(),
+                        climb.getDifficultyGrade(),
+                        climb.getClimbingStyle(),
+                        climb.getDate(),
+                        climb.getNotes(),
+                        climb.getWallIncline()
+                ));
     public Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto) {
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
