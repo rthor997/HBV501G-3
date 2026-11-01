@@ -1,3 +1,4 @@
+
 package org.example.klifurapp.entity;
 
 import jakarta.persistence.*;
@@ -49,14 +50,6 @@ public class Route {
         this.name = name;
     }
 
-    public GradingSystem getGradingSystem() {
-        return gradingSystem;
-    }
-
-    public void setGradingSystem(GradingSystem gradingSystem) {
-        this.gradingSystem = gradingSystem;
-    }
-
     public String getDifficultyGrade() {
         return difficultyGrade;
     }
@@ -65,12 +58,12 @@ public class Route {
         this.difficultyGrade = difficultyGrade;
     }
 
-    public String getLocation() {
-        return location;
+    public GradingSystem getGradingSystem() {
+        return gradingSystem;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public void setGradingSystem(GradingSystem gradingSystem) {
+        this.gradingSystem = gradingSystem;
     }
 
     public ClimbingStyle getClimbingStyle() {
@@ -89,6 +82,14 @@ public class Route {
         this.wallIncline = wallIncline;
     }
 
+    public String getCharacteristics() {
+        return characteristics;
+    }
+
+    public void setCharacteristics(String characteristics) {
+        this.characteristics = characteristics;
+    }
+
     public boolean isIndoor() {
         return indoor;
     }
@@ -97,11 +98,11 @@ public class Route {
         this.indoor = indoor;
     }
 
-    public String getCharacteristics() {
-        return characteristics;
+    public String getLocation() {
+        return location;
     }
 
-    public void setCharacteristics(String characteristics) {
-        this.characteristics = characteristics;
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

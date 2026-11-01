@@ -85,6 +85,9 @@ public class ClimbServiceImplementation implements ClimbService {
                         climb.getNotes(),
                         climb.getWallIncline()
                 ));
+    }
+
+    @Override
     public Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto) {
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
@@ -96,11 +99,18 @@ public class ClimbServiceImplementation implements ClimbService {
         // passa að gradesystem og difficulty grade séu samrænt
         // gera ráð fyrir partial update
         GradingSystem gradingSystem =
-                dto.difficultyGrade() != null
-                        ? dto.gradingSystem() : climb.getGradingSystem();
-        String difficultyGrade =
                 dto.gradingSystem() != null
-                ? dto.difficultyGrade() : climb.getDifficultyGrade();
+                        ? dto.gradingSystem()
+                        : climb.getGradingSystem();
+
+        String difficultyGrade =
+                dto.difficultyGrade() != null
+                        ? dto.difficultyGrade()
+                        : climb.getDifficultyGrade();
+
+        if (dto.gradingSystem() != null || dto.difficultyGrade() != null) {
+            validateGrade(gradingSystem, difficultyGrade);
+        }
 
         if(dto.gradingSystem() != null || dto.difficultyGrade() != null) {
             validateGrade(gradingSystem, difficultyGrade);
