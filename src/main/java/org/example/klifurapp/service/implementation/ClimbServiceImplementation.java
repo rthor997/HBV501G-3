@@ -1,20 +1,23 @@
 package org.example.klifurapp.service.implementation;
 
-import org.example.klifurapp.DTO.requests.ClimbResponseDTO;
-import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
+import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
+import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.GradingSystem;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDate;
 
 @Service
 public class ClimbServiceImplementation implements ClimbService {
@@ -133,5 +136,79 @@ public class ClimbServiceImplementation implements ClimbService {
         }
 
         return climbRepository.save(climb);
+    }
+
+
+    @Override
+    public ClimbResponseDTO getClimb(Long id) {
+
+        Climb climb = climbRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Climb not found"
+                        )
+                );
+
+        return new ClimbResponseDTO(
+                climb.getId(),
+                climb.getGradingSystem(),
+                climb.getDifficultyGrade(),
+                climb.getClimbingStyle(),
+                climb.getDate(),
+                climb.getNotes(),
+                climb.getWallIncline()
+        );
+    }
+
+
+    @Override
+    public Page<ClimbSummaryResponseDTO> getClimbingHistory(
+            Long userId,
+            String grade,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+
+        Page<Climb> climbs =
+                climbRepository.findFilteredClimbs(
+                        userId,
+                        grade,
+                        startDate,
+                        endDate,
+                        pageable
+                );
+
+        return climbs.map(climb ->
+                new ClimbSummaryResponseDTO(
+                        climb.getId(),
+                        climb.getDifficultyGrade(),
+                        climb.getDate()
+                )
+        );
+    }
+
+
+    @Override
+    public void deleteClimb(
+            Long id,
+            Long userId) {
+
+        Climb climb = climbRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Climb not found"
+                        )
+                );
+
+        if (!climb.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You do not own this climb"
+            );
+        }
+
+        climbRepository.delete(climb);
     }
 }

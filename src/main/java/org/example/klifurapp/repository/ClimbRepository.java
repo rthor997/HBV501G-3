@@ -10,15 +10,22 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 
 public interface ClimbRepository extends JpaRepository<Climb, Long> {
-    Page<Climb> findByUserId(Long userId, Pageable pageable);
 
+    Page<Climb> findByUserId(
+            Long userId,
+            Pageable pageable
+    );
 
-    @Query("SELECT c FROM Climb c WHERE c.user.email = :email " +
-            "AND (:grade IS NULL OR c.grade = :grade) " +
-            "AND (CAST(:startDate AS date) IS NULL OR c.date >= :startDate) " +
-            "AND (CAST(:endDate AS date) IS NULL OR c.date <= :endDate)")
+    @Query("""
+        SELECT c
+        FROM Climb c
+        WHERE c.user.id = :userId
+        AND (:grade IS NULL OR c.difficultyGrade = :grade)
+        AND (:startDate IS NULL OR c.date >= :startDate)
+        AND (:endDate IS NULL OR c.date <= :endDate)
+        """)
     Page<Climb> findFilteredClimbs(
-            @Param("email") String email,
+            @Param("userId") Long userId,
             @Param("grade") String grade,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
