@@ -1,14 +1,13 @@
 package org.example.klifurapp.service.implementation;
 
-import org.example.klifurapp.DTO.climb.ClimbResponseDTO;
 import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
-import org.example.klifurapp.DTO.climb.CreateClimbDTO;
+import org.example.klifurapp.DTO.requests.ClimbResponseDTO;
+import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.GradingSystem;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
-import org.example.klifurapp.service.ClimbService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,7 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
-    public Climb createClimb(CreateClimbDTO dto, Long userId) {
+    public Climb createClimb(CreateClimbRequestDTO dto, Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -85,6 +84,7 @@ public class ClimbServiceImplementation implements ClimbService {
                         climb.getNotes(),
                         climb.getWallIncline()
                 ));
+
     }
 
     @Override

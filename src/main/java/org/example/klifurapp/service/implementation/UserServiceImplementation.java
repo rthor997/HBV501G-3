@@ -1,8 +1,8 @@
 package org.example.klifurapp.service.implementation;
 
-import org.example.klifurapp.DTO.user.AdminUpdateUserDTO;
-import org.example.klifurapp.DTO.user.UserDTO;
-import org.example.klifurapp.DTO.user.UpdateUserDTO;
+import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
+import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
+import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.UserService;
@@ -22,14 +22,14 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    public UserDTO getUser(Long id) {
+    public UserResponseDTO getUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new IllegalArgumentException("User not found, ID mismatch")
                 );
 
         // Hér má síðar bæta við upplýsingum um user sem mætti sækja eins og profile pic
-        UserDTO userDto = new UserDTO();
+        UserResponseDTO userDto = new UserResponseDTO();
         userDto.setEmail(user.getEmail());
         userDto.setUsername(user.getUsername());
 
@@ -48,7 +48,7 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    public User updateUser(Long id, UpdateUserDTO dto) {
+    public User updateUser(Long id, UpdateUserRequestDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(()->
                         new IllegalArgumentException("User Not Found")

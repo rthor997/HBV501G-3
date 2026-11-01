@@ -1,9 +1,8 @@
-package org.example.klifurapp.DTO.workout;
+package org.example.klifurapp.DTO.requests;
 
 import jakarta.validation.constraints.NotBlank;
 
 public class LogWorkoutRequestDTO {
-  
 
     @NotBlank
     private String exerciseName;
@@ -12,7 +11,6 @@ public class LogWorkoutRequestDTO {
     private Integer repetitions;
     private Double weight;
     private Integer durationMinutes;
-
 
     public String getExerciseName() {
         return exerciseName;

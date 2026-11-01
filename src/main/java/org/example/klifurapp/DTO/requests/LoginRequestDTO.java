@@ -1,4 +1,4 @@
-package org.example.klifurapp.DTO.user;
+package org.example.klifurapp.DTO.requests;
 
 public class LoginRequestDTO {
     private String email;

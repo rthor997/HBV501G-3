@@ -1,4 +1,4 @@
-package org.example.klifurapp.DTO.climb;
+package org.example.klifurapp.DTO.requests;
 
 import org.example.klifurapp.entity.ClimbingStyle;
 import org.example.klifurapp.entity.GradingSystem;

@@ -1,15 +1,7 @@
-package org.example.klifurapp.DTO.user;
+package org.example.klifurapp.DTO.requests;
 
-import jakarta.validation.constraints.NotBlank;
-
-
-public class CreateUserDTO {
-
-    @NotBlank
+public class UpdateUserRequestDTO {
     private String username;
-    @NotBlank
-    private String email;
-    @NotBlank
     private String password;
 
     public String getUsername() {
@@ -18,14 +10,6 @@ public class CreateUserDTO {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPassword() {

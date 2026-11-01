@@ -1,11 +1,12 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-import org.example.klifurapp.DTO.user.*;
-import org.example.klifurapp.DTO.user.CreateUserDTO;
-import org.example.klifurapp.DTO.user.LoginRequestDTO;
-import org.example.klifurapp.DTO.user.LoginResponseDTO;
-import org.example.klifurapp.DTO.user.UpdateUserDTO;
+import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
+import org.example.klifurapp.DTO.responses.UserResponseDTO;
+import org.example.klifurapp.DTO.requests.CreateUserRequestDTO;
+import org.example.klifurapp.DTO.requests.LoginRequestDTO;
+import org.example.klifurapp.DTO.responses.LoginResponseDTO;
+import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
@@ -28,7 +29,7 @@ public class UserController {
     }
     //public endpoint
     @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserDTO dto) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserRequestDTO dto) {
         User user = authService.register(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
@@ -37,7 +38,7 @@ public class UserController {
     @PostMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createAdmin(
-            @Valid @RequestBody CreateUserDTO dto) {
+            @Valid @RequestBody CreateUserRequestDTO dto) {
         User admin = authService.createAdmin(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(admin);
     }
@@ -56,14 +57,14 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDTO> getUser(Authentication authentication){
+    public ResponseEntity<UserResponseDTO> getUser(Authentication authentication){
         Long userId = (Long) authentication.getPrincipal();
-        UserDTO userDto = userService.getUser(userId);
+        UserResponseDTO userDto = userService.getUser(userId);
         return ResponseEntity.ok(userDto);
     }
     @PutMapping("/me")
     public ResponseEntity<User> updateUser(
-            @RequestBody UpdateUserDTO dto,
+            @RequestBody UpdateUserRequestDTO dto,
             Authentication authentication) {
 
         Long userId = (Long) authentication.getPrincipal();

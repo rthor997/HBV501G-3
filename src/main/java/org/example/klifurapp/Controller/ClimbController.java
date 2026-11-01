@@ -1,9 +1,9 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-import org.example.klifurapp.DTO.climb.ClimbResponseDTO;
 import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
-import org.example.klifurapp.DTO.climb.CreateClimbDTO;
+import org.example.klifurapp.DTO.requests.ClimbResponseDTO;
+import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.service.ClimbService;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,7 @@ public class ClimbController {
 
     @PostMapping
     public ResponseEntity<Climb> createClimb(
-            @Valid @RequestBody CreateClimbDTO dto,
+            @Valid @RequestBody CreateClimbRequestDTO dto,
             Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         Climb climb = climbService.createClimb(dto, userId);
