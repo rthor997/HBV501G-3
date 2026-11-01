@@ -34,6 +34,10 @@ public class Climb {
     @Enumerated(EnumType.STRING)
     private WallIncline wallIncline;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "route_id")
+    private Route route;
+
     public Climb() {
     }
 
@@ -95,5 +99,13 @@ public class Climb {
 
     public void setWallIncline(WallIncline wallIncline) {
         this.wallIncline = wallIncline;
+    }
+
+    public Route getRoute() {
+        return route;
+    }
+
+    public void setRoute(Route route) {
+        this.route = route;
     }
 }

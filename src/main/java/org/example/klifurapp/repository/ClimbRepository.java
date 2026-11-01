@@ -1,3 +1,4 @@
+
 package org.example.klifurapp.repository;
 
 import org.example.klifurapp.entity.Climb;
@@ -8,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+
+import java.util.List;
 
 public interface ClimbRepository extends JpaRepository<Climb, Long> {
 
@@ -31,4 +34,13 @@ public interface ClimbRepository extends JpaRepository<Climb, Long> {
             @Param("endDate") LocalDate endDate,
             Pageable pageable
     );
+}
+    // View Route Details
+    List<Climb> findByRouteId(Long routeId);
+
+    List<Climb> findByRouteIdAndUserIdIn(
+            Long routeId,
+            List<Long> userIds
+    );
+
 }

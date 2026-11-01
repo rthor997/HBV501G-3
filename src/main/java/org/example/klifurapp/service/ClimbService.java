@@ -1,7 +1,8 @@
 package org.example.klifurapp.service;
 
-import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
+import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
 import org.example.klifurapp.entity.Climb;
 import org.springframework.data.domain.Page;
@@ -13,7 +14,7 @@ public interface ClimbService {
 
     Page<ClimbResponseDTO> getClimbsByUserId(Long userId, Pageable pageable);
     Climb createClimb(CreateClimbRequestDTO dto, Long userId);
-    Climb updateClimbAsAdmin(Long id, org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO dto);
+    Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto);
     ClimbResponseDTO getClimb(Long id);
     Page<ClimbSummaryResponseDTO> getClimbingHistory(
             Long userId,
@@ -25,3 +26,5 @@ public interface ClimbService {
 
     void deleteClimb(Long id, Long userId);
 }
+
+
