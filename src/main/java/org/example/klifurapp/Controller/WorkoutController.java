@@ -8,6 +8,12 @@ import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.service.WorkoutService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -43,11 +49,26 @@ public class WorkoutController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<WorkoutResponseDTO>> getWorkoutsByUser(
-            @PathVariable Long userId) {
+    public ResponseEntity<Page<WorkoutResponseDTO>> getWorkoutsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        List<WorkoutResponseDTO> workouts =
-                workoutService.getWorkoutsByUserId(userId);
+        if (page < 0 || size < 1 || size > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid pagination parameters"
+            );
+        }
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        Page<WorkoutResponseDTO> workouts =
+                workoutService.getWorkoutsByUserId(userId, pageable);
 
         return ResponseEntity.ok(workouts);
     }

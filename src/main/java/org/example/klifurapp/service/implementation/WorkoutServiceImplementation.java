@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.example.klifurapp.DTO.workout.EditWorkoutRequestDTO;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -70,7 +72,8 @@ public class WorkoutServiceImplementation implements WorkoutService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<WorkoutResponseDTO> getWorkoutsByUserId(Long userId) {
+    public Page<WorkoutResponseDTO> getWorkoutsByUserId(
+            Long userId, Pageable pageable) {
 
         if (!userRepository.existsById(userId)) {
             throw new ResponseStatusException(
@@ -79,8 +82,7 @@ public class WorkoutServiceImplementation implements WorkoutService {
             );
         }
 
-        return workoutRepository.findByUserIdOrderByIdDesc(userId)
-                .stream()
+        return workoutRepository.findByUserId(userId, pageable)
                 .map(workout -> new WorkoutResponseDTO(
                         workout.getId(),
                         workout.getExerciseName(),
@@ -88,7 +90,6 @@ public class WorkoutServiceImplementation implements WorkoutService {
                         workout.getRepetitions(),
                         workout.getWeight(),
                         workout.getDurationMinutes()
-                ))
-                .toList();
+                ));
     }
 }
