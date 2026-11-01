@@ -1,0 +1,17 @@
+package org.example.klifurapp.DTO.climb;
+
+import org.example.klifurapp.entity.ClimbingStyle;
+import org.example.klifurapp.entity.GradingSystem;
+import org.example.klifurapp.entity.WallIncline;
+
+import java.time.LocalDate;
+
+public record AdminUpdateClimbDTO(
+    GradingSystem gradingSystem,
+    String difficultyGrade,
+    ClimbingStyle climbingStyle,
+    LocalDate date,
+    String notes,
+    WallIncline wallIncline
+){}
+

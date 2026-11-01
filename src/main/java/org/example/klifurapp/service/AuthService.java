@@ -7,5 +7,6 @@ import org.example.klifurapp.entity.User;
 
 public interface AuthService {
     User register(CreateUserRequestDTO dto);
+    User createAdmin(CreateUserRequestDTO dto);
     LoginResponseDTO login(LoginRequestDTO dto);
 }
