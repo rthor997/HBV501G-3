@@ -1,5 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.DTO.user.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.user.UserDTO;
 import org.example.klifurapp.DTO.user.UpdateUserDTO;
 import org.example.klifurapp.entity.User;
@@ -7,6 +8,7 @@ import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImplementation implements UserService {
@@ -35,16 +37,18 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("User not found, ID mismatch");
-        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found, ID mismatch")
+                );
 
-        userRepository.deleteById(id);
+        userRepository.delete(user);
     }
 
     @Override
-    public User updateUser(long id, UpdateUserDTO dto) {
+    public User updateUser(Long id, UpdateUserDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(()->
                         new IllegalArgumentException("User Not Found")
@@ -68,4 +72,44 @@ public class UserServiceImplementation implements UserService {
         }
         return userRepository.save(user);
     }
+
+    @Override
+    public User updateUserAsAdmin(Long id, AdminUpdateUserDTO dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(()->
+                        new IllegalArgumentException("User Not Found")
+                );
+        if (dto.username() != null) {
+            userRepository.findByUsername(dto.username())
+                    .ifPresent(existingUser -> {
+                        if (!existingUser.getId().equals(id)) {
+                            throw new IllegalArgumentException(
+                                    "Username is already taken"
+                            );
+                        }
+                    });
+            user.setUsername(dto.username());
+        }
+
+        if (dto.email() != null) {
+            userRepository.findByEmail(dto.email())
+                    .ifPresent(existingUser -> {
+                        if (!existingUser.getId().equals(id)) {
+                            throw new IllegalArgumentException(
+                                    "Email is already registered"
+                            );
+                        }
+                    });
+
+            user.setEmail(dto.email());
+        }
+
+        if (dto.password() != null) {
+            user.setPasswordHash(
+                    passwordEncoder.encode(dto.password())
+            );
+        }
+        return userRepository.save(user);
+    }
+
 }

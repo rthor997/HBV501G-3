@@ -1,8 +1,9 @@
 package org.example.klifurapp.DTO.climb;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.example.klifurapp.entity.ClimbingStyle;
-import org.example.klifurapp.entity.DifficultyGrade;
+import org.example.klifurapp.entity.GradingSystem;
 import org.example.klifurapp.entity.WallIncline;
 
 import java.time.LocalDate;
@@ -10,10 +11,10 @@ import java.time.LocalDate;
 public class CreateClimbDTO {
 
     @NotNull
-    private Long userId;
+    private GradingSystem gradingSystem;
 
-    @NotNull
-    private DifficultyGrade difficultyGrade;
+    @NotBlank
+    private String difficultyGrade;
 
     @NotNull
     private ClimbingStyle climbingStyle;
@@ -25,19 +26,19 @@ public class CreateClimbDTO {
 
     private WallIncline wallIncline;
 
-    public Long getUserId() {
-        return userId;
+    public GradingSystem getGradingSystem() {
+        return gradingSystem;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setGradingSystem(GradingSystem gradingSystem) {
+        this.gradingSystem = gradingSystem;
     }
 
-    public DifficultyGrade getDifficultyGrade() {
+    public String getDifficultyGrade() {
         return difficultyGrade;
     }
 
-    public void setDifficultyGrade(DifficultyGrade difficultyGrade) {
+    public void setDifficultyGrade(String difficultyGrade) {
         this.difficultyGrade = difficultyGrade;
     }
 

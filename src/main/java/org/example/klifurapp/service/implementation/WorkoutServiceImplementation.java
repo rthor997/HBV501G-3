@@ -29,9 +29,9 @@ public class WorkoutServiceImplementation implements WorkoutService {
     }
 
     @Override
-    public Workout logWorkout(LogWorkoutRequestDTO dto) {
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("Notandi fannst ekki"));
+    public Workout logWorkout(LogWorkoutRequestDTO dto, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         Workout workout = new Workout();
 
@@ -46,20 +46,27 @@ public class WorkoutServiceImplementation implements WorkoutService {
     }
 
     @Override
-    public boolean deleteWorkout(Long id) {
-        if (!workoutRepository.existsById(id)) {
-            throw new IllegalArgumentException("Workout not found");
+    public boolean deleteWorkout(Long id, Long userId) {
+       Workout workout = workoutRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+
+        if (!workout.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("You do not own this workout");
         }
+        workoutRepository.delete(workout);
 
-        workoutRepository.deleteById(id);
-
-        return !workoutRepository.existsById(id);
+        return true;
     }
 
     @Override
-    public Workout updateWorkout(Long id, EditWorkoutRequestDTO dto) {
+    public Workout updateWorkout(Long id, EditWorkoutRequestDTO dto, Long userId) {
         Workout workout = workoutRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Æfing fannst ekki"));
+                .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+
+        if (!workout.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException(
+                    "You do not own this workout"
+            );
+        }
 
         workout.setExerciseName(dto.getExerciseName());
         workout.setSets(dto.getSets());
