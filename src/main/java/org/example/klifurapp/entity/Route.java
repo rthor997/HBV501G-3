@@ -1,3 +1,4 @@
+
 package org.example.klifurapp.entity;
 
 import jakarta.persistence.*;
@@ -13,8 +14,26 @@ public class Route {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String grade;
+    private GradingSystem gradingSystem;
+
+    @Column(nullable = false)
+    private String difficultyGrade;
+
+    @Column(nullable = false)
+    private String location;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ClimbingStyle climbingStyle;
+
+    @Enumerated(EnumType.STRING)
+    private WallIncline wallIncline;
+
+    private boolean indoor;
+
+    private String characteristics;
 
     public Route() {
     }
@@ -31,11 +50,59 @@ public class Route {
         this.name = name;
     }
 
-    public String getGrade() {
-        return grade;
+    public String getDifficultyGrade() {
+        return difficultyGrade;
     }
 
-    public void setGrade(String grade) {
-        this.grade = grade;
+    public void setDifficultyGrade(String difficultyGrade) {
+        this.difficultyGrade = difficultyGrade;
+    }
+
+    public GradingSystem getGradingSystem() {
+        return gradingSystem;
+    }
+
+    public void setGradingSystem(GradingSystem gradingSystem) {
+        this.gradingSystem = gradingSystem;
+    }
+
+    public ClimbingStyle getClimbingStyle() {
+        return climbingStyle;
+    }
+
+    public void setClimbingStyle(ClimbingStyle climbingStyle) {
+        this.climbingStyle = climbingStyle;
+    }
+
+    public WallIncline getWallIncline() {
+        return wallIncline;
+    }
+
+    public void setWallIncline(WallIncline wallIncline) {
+        this.wallIncline = wallIncline;
+    }
+
+    public String getCharacteristics() {
+        return characteristics;
+    }
+
+    public void setCharacteristics(String characteristics) {
+        this.characteristics = characteristics;
+    }
+
+    public boolean isIndoor() {
+        return indoor;
+    }
+
+    public void setIndoor(boolean indoor) {
+        this.indoor = indoor;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

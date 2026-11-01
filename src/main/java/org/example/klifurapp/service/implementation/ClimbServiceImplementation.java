@@ -1,14 +1,13 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.ClimbResponseDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
-import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.GradingSystem;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
-import org.example.klifurapp.service.ClimbService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,8 +84,10 @@ public class ClimbServiceImplementation implements ClimbService {
                         climb.getNotes(),
                         climb.getWallIncline()
                 ));
+
     }
 
+    @Override
     public Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto) {
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
@@ -98,11 +99,18 @@ public class ClimbServiceImplementation implements ClimbService {
         // passa að gradesystem og difficulty grade séu samrænt
         // gera ráð fyrir partial update
         GradingSystem gradingSystem =
-                dto.difficultyGrade() != null
-                        ? dto.gradingSystem() : climb.getGradingSystem();
-        String difficultyGrade =
                 dto.gradingSystem() != null
-                ? dto.difficultyGrade() : climb.getDifficultyGrade();
+                        ? dto.gradingSystem()
+                        : climb.getGradingSystem();
+
+        String difficultyGrade =
+                dto.difficultyGrade() != null
+                        ? dto.difficultyGrade()
+                        : climb.getDifficultyGrade();
+
+        if (dto.gradingSystem() != null || dto.difficultyGrade() != null) {
+            validateGrade(gradingSystem, difficultyGrade);
+        }
 
         if(dto.gradingSystem() != null || dto.difficultyGrade() != null) {
             validateGrade(gradingSystem, difficultyGrade);
