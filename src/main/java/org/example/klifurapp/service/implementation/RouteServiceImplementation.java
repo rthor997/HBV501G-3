@@ -1,5 +1,7 @@
+
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.DTO.climb.AdminUpdateRouteDTO;
 import org.example.klifurapp.DTO.route.RouteDetailsResponseDTO;
 import org.example.klifurapp.DTO.route.RouteFriendDTO;
 import org.example.klifurapp.entity.Climb;
@@ -35,6 +37,7 @@ public class RouteServiceImplementation implements RouteService {
         this.userRepository = userRepository;
     }
 
+    // UC12 - View Route Details
     @Override
     @Transactional(readOnly = true)
     public RouteDetailsResponseDTO getRouteDetails(Long routeId) {
@@ -78,13 +81,62 @@ public class RouteServiceImplementation implements RouteService {
                 route.getId(),
                 route.getName(),
                 route.getDifficultyGrade(),
-                route.getGradingSystem(),
-                route.getClimbingStyle(),
-                route.getWallIncline(),
+                route.getGradingSystem().name(),
+                route.getClimbingStyle().name(),
+                route.getWallIncline() != null
+                        ? route.getWallIncline().name()
+                        : null,
                 route.getCharacteristics(),
-                route.getIndoor(),
+                route.isIndoor(),
                 route.getLocation(),
                 friendsWhoCompleted
         );
+    }
+
+    // Admin - Update Route
+    @Override
+    public Route updateRouteAsAdmin(
+            Long routeId,
+            AdminUpdateRouteDTO dto
+    ) {
+        Route route = routeRepository.findById(routeId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Route not found"
+                ));
+
+        if (dto.name() != null) {
+            route.setName(dto.name());
+        }
+
+        if (dto.gradingSystem() != null) {
+            route.setGradingSystem(dto.gradingSystem());
+        }
+
+        if (dto.difficultyGrade() != null) {
+            route.setDifficultyGrade(dto.difficultyGrade());
+        }
+
+        if (dto.location() != null) {
+            route.setLocation(dto.location());
+        }
+
+        if (dto.climbingStyle() != null) {
+            route.setClimbingStyle(dto.climbingStyle());
+        }
+
+        if (dto.wallIncline() != null) {
+            route.setWallIncline(dto.wallIncline());
+        }
+
+        if (dto.indoor() != null) {
+            route.setIndoor(dto.indoor());
+        }
+
+        if (dto.characteristics() != null) {
+            route.setCharacteristics(dto.characteristics());
+        }
+
+        return routeRepository.save(route);
     }
 }

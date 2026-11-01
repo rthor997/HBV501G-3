@@ -1,3 +1,4 @@
+
 package org.example.klifurapp.entity;
 
 import jakarta.persistence.*;
@@ -13,23 +14,26 @@ public class Route {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "difficulty_grade")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GradingSystem gradingSystem;
+
+    @Column(nullable = false)
     private String difficultyGrade;
 
-    @Column(name = "grading_system")
-    private String gradingSystem;
+    @Column(nullable = false)
+    private String location;
 
-    @Column(name = "climbing_style")
-    private String climbingStyle;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ClimbingStyle climbingStyle;
 
-    @Column(name = "wall_incline")
-    private String wallIncline;
+    @Enumerated(EnumType.STRING)
+    private WallIncline wallIncline;
+
+    private boolean indoor;
 
     private String characteristics;
-
-    private Boolean indoor;
-
-    private String location;
 
     public Route() {
     }
@@ -46,27 +50,55 @@ public class Route {
         return difficultyGrade;
     }
 
-    public String getGradingSystem() {
+    public void setDifficultyGrade(String difficultyGrade) {
+        this.difficultyGrade = difficultyGrade;
+    }
+
+    public GradingSystem getGradingSystem() {
         return gradingSystem;
     }
 
-    public String getClimbingStyle() {
+    public void setGradingSystem(GradingSystem gradingSystem) {
+        this.gradingSystem = gradingSystem;
+    }
+
+    public ClimbingStyle getClimbingStyle() {
         return climbingStyle;
     }
 
-    public String getWallIncline() {
+    public void setClimbingStyle(ClimbingStyle climbingStyle) {
+        this.climbingStyle = climbingStyle;
+    }
+
+    public WallIncline getWallIncline() {
         return wallIncline;
+    }
+
+    public void setWallIncline(WallIncline wallIncline) {
+        this.wallIncline = wallIncline;
     }
 
     public String getCharacteristics() {
         return characteristics;
     }
 
-    public Boolean getIndoor() {
+    public void setCharacteristics(String characteristics) {
+        this.characteristics = characteristics;
+    }
+
+    public boolean isIndoor() {
         return indoor;
+    }
+
+    public void setIndoor(boolean indoor) {
+        this.indoor = indoor;
     }
 
     public String getLocation() {
         return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }
