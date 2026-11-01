@@ -5,8 +5,10 @@ import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.service.RouteService;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+@Service
 public class RouteServiceImplementation implements RouteService {
     private final RouteRepository routeRepository;
 
@@ -30,8 +32,32 @@ public class RouteServiceImplementation implements RouteService {
             route.setName(dto.name());
         }
 
-        if(dto.grade() != null) {
-            route.setGrade(dto.grade());
+        if (dto.gradingSystem() != null) {
+            route.setGradingSystem(dto.gradingSystem());
+        }
+
+        if(dto.difficultyGrade() != null) {
+            route.setDifficultyGrade(dto.difficultyGrade());
+        }
+
+        if (dto.location() != null) {
+            route.setLocation(dto.location());
+        }
+
+        if (dto.climbingStyle() != null) {
+            route.setClimbingStyle(dto.climbingStyle());
+        }
+
+        if (dto.wallIncline() != null) {
+            route.setWallIncline(dto.wallIncline());
+        }
+
+        if (dto.indoor() != null) {
+            route.setIndoor(dto.indoor());
+        }
+
+        if(dto.characteristics() != null) {
+            route.setCharacteristics(dto.characteristics());
         }
         return routeRepository.save(route);
     }

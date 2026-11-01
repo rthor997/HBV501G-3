@@ -5,10 +5,10 @@ import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.service.RouteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
+@RestController
+@RequestMapping("/api/routes")
 public class RouteController {
     private final RouteService routeService;
 
