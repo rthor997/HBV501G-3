@@ -1,6 +1,7 @@
 package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.climb.ClimbResponseDTO;
+import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.climb.CreateClimbDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.GradingSystem;
@@ -29,13 +30,12 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
-    public Climb createClimb(CreateClimbDTO dto) {
+    public Climb createClimb(CreateClimbDTO dto, Long userId) {
 
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"
-                ));
-
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found")
+                );
         validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
         Climb climb = new Climb();
         climb.setUser(user);
@@ -85,5 +85,51 @@ public class ClimbServiceImplementation implements ClimbService {
                         climb.getNotes(),
                         climb.getWallIncline()
                 ));
+    public Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto) {
+        Climb climb = climbRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Climb not found"
+                        )
+                );
+        // passa að gradesystem og difficulty grade séu samrænt
+        // gera ráð fyrir partial update
+        GradingSystem gradingSystem =
+                dto.difficultyGrade() != null
+                        ? dto.gradingSystem() : climb.getGradingSystem();
+        String difficultyGrade =
+                dto.gradingSystem() != null
+                ? dto.difficultyGrade() : climb.getDifficultyGrade();
+
+        if(dto.gradingSystem() != null || dto.difficultyGrade() != null) {
+            validateGrade(gradingSystem, difficultyGrade);
+        }
+
+        if(dto.gradingSystem() != null) {
+            climb.setGradingSystem(dto.gradingSystem());
+        }
+
+        if(dto.difficultyGrade() != null) {
+            climb.setDifficultyGrade(dto.difficultyGrade());
+        }
+
+        if(dto.climbingStyle() != null) {
+            climb.setClimbingStyle(dto.climbingStyle());
+        }
+
+        if(dto.date() != null) {
+            climb.setDate(dto.date());
+        }
+
+        if(dto.notes() != null) {
+            climb.setNotes(dto.notes());
+        }
+
+        if (dto.wallIncline() != null) {
+            climb.setWallIncline(dto.wallIncline());
+        }
+
+        return climbRepository.save(climb);
     }
 }
