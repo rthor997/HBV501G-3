@@ -2,13 +2,19 @@ package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.LogWorkoutRequestDTO;
-import org.example.klifurapp.DTO.requests.EditWorkoutRequestDTO; // Passa að hafa þetta
+import org.example.klifurapp.DTO.requests.EditWorkoutRequestDTO;
+import org.example.klifurapp.DTO.requests.WorkoutResponseDTO;
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.service.WorkoutService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.security.Principal; // Nýja importið fyrir JWT
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/workouts")
@@ -23,26 +29,54 @@ public class WorkoutController {
     @PostMapping
     public ResponseEntity<Workout> logWorkout(
             @Valid @RequestBody LogWorkoutRequestDTO dto,
-            Principal principal) {
-
-        String userEmail = principal.getName();
-
-        Workout savedWorkout = workoutService.logWorkout(userEmail, dto);
-        return ResponseEntity.ok(savedWorkout);
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        Workout savedWorkout = workoutService.logWorkout(dto, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedWorkout);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteLoggedWorkout(@PathVariable Long id) {
-        workoutService.deleteWorkout(id);
+    public ResponseEntity<Void> deleteLoggedWorkout(
+            @PathVariable Long id,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        workoutService.deleteWorkout(id, userId);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Workout> updateWorkout(
-            @PathVariable Long id,
-            @Valid @RequestBody EditWorkoutRequestDTO dto) {
+            @PathVariable Long id, 
+            @Valid @RequestBody EditWorkoutRequestDTO dto,
+            Authentication authentication) {
 
-        Workout updatedWorkout = workoutService.updateWorkout(id, dto);
+        Long userId = (Long) authentication.getPrincipal();
+        Workout updatedWorkout = workoutService.updateWorkout(id, dto, userId);
         return ResponseEntity.ok(updatedWorkout);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Page<WorkoutResponseDTO>> getWorkoutsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (page < 0 || size < 1 || size > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid pagination parameters"
+            );
+        }
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        Page<WorkoutResponseDTO> workouts =
+                workoutService.getWorkoutsByUserId(userId, pageable);
+
+        return ResponseEntity.ok(workouts);
     }
 }

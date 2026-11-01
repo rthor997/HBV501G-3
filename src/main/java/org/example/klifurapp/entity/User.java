@@ -1,5 +1,8 @@
 package org.example.klifurapp.entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import  jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -14,11 +17,24 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.REMOVE
+    )
+    private List<Climb> climbs = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.REMOVE
+    )
+    private List<Workout> workouts = new ArrayList<>();
 
     public  User() {
 
