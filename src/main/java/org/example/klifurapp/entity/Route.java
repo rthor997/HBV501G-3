@@ -13,8 +13,23 @@ public class Route {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String grade;
+    @Column(name = "difficulty_grade")
+    private String difficultyGrade;
+
+    @Column(name = "grading_system")
+    private String gradingSystem;
+
+    @Column(name = "climbing_style")
+    private String climbingStyle;
+
+    @Column(name = "wall_incline")
+    private String wallIncline;
+
+    private String characteristics;
+
+    private Boolean indoor;
+
+    private String location;
 
     public Route() {
     }
@@ -27,15 +42,31 @@ public class Route {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public String getDifficultyGrade() {
+        return difficultyGrade;
     }
 
-    public String getGrade() {
-        return grade;
+    public String getGradingSystem() {
+        return gradingSystem;
     }
 
-    public void setGrade(String grade) {
-        this.grade = grade;
+    public String getClimbingStyle() {
+        return climbingStyle;
+    }
+
+    public String getWallIncline() {
+        return wallIncline;
+    }
+
+    public String getCharacteristics() {
+        return characteristics;
+    }
+
+    public Boolean getIndoor() {
+        return indoor;
+    }
+
+    public String getLocation() {
+        return location;
     }
 }
