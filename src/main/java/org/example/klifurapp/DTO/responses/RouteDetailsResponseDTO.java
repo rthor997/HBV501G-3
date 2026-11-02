@@ -1,4 +1,4 @@
-package org.example.klifurapp.DTO.route;
+package org.example.klifurapp.DTO.responses;
 
 import java.util.List;
 

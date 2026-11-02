@@ -2,8 +2,8 @@
 package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateRouteDTO;
-import org.example.klifurapp.DTO.route.RouteDetailsResponseDTO;
-import org.example.klifurapp.DTO.route.RouteFriendDTO;
+import org.example.klifurapp.DTO.responses.RouteDetailsResponseDTO;
+import org.example.klifurapp.DTO.responses.RouteFriendDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.entity.User;
