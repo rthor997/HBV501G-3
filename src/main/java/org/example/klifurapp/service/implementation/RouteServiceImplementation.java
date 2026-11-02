@@ -1,7 +1,7 @@
 
 package org.example.klifurapp.service.implementation;
 
-import org.example.klifurapp.DTO.climb.AdminUpdateRouteDTO;
+import org.example.klifurapp.DTO.requests.AdminUpdateRouteDTO;
 import org.example.klifurapp.DTO.route.RouteDetailsResponseDTO;
 import org.example.klifurapp.DTO.route.RouteFriendDTO;
 import org.example.klifurapp.entity.Climb;
@@ -48,11 +48,11 @@ public class RouteServiceImplementation implements RouteService {
                         "Route not found"
                 ));
 
-        Long currentUserId = Long.valueOf(
-                SecurityContextHolder.getContext()
+        Long currentUserId =
+                (Long) SecurityContextHolder
+                        .getContext()
                         .getAuthentication()
-                        .getName()
-        );
+                        .getPrincipal();
 
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResponseStatusException(

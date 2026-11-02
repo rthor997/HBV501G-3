@@ -2,7 +2,7 @@
 package org.example.klifurapp.service;
 
 import org.example.klifurapp.DTO.route.RouteDetailsResponseDTO;
-import org.example.klifurapp.DTO.climb.AdminUpdateRouteDTO;
+import org.example.klifurapp.DTO.requests.AdminUpdateRouteDTO;
 import org.example.klifurapp.entity.Route;
 
 public interface RouteService {
