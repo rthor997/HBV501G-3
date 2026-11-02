@@ -1,6 +1,6 @@
 package org.example.klifurapp.service;
 
-import org.example.klifurapp.DTO.climb.AdminUpdateClimbDTO;
+import org.example.klifurapp.DTO.requests.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;

@@ -34,7 +34,7 @@ public interface ClimbRepository extends JpaRepository<Climb, Long> {
             @Param("endDate") LocalDate endDate,
             Pageable pageable
     );
-}
+
     // View Route Details
     List<Climb> findByRouteId(Long routeId);
 

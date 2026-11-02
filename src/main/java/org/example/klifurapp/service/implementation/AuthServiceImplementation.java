@@ -48,7 +48,7 @@ public class AuthServiceImplementation implements AuthService {
     }
 
     @Override
-    public User createAdmin(CreateUserDTO dto) {
+    public User createAdmin(CreateUserRequestDTO dto) {
         if(userRepository.findByUsername(dto.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username is already taken");
         }
