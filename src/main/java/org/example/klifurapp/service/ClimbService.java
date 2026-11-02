@@ -15,7 +15,7 @@ public interface ClimbService {
     Page<ClimbResponseDTO> getClimbsByUserId(Long userId, Pageable pageable);
     Climb createClimb(CreateClimbRequestDTO dto, Long userId);
     Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto);
-    ClimbResponseDTO getClimb(Long id);
+    ClimbResponseDTO getClimb(Long id, Long userId, boolean isAdmin);
     Page<ClimbSummaryResponseDTO> getClimbingHistory(
             Long userId,
             String grade,

@@ -31,7 +31,7 @@ public class WorkoutServiceImplementation implements WorkoutService {
     @Override
     public Workout logWorkout(LogWorkoutRequestDTO dto, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found"));
 
         Workout workout = new Workout();
 
@@ -47,10 +47,10 @@ public class WorkoutServiceImplementation implements WorkoutService {
 
     @Override
     public void deleteWorkout(Long id, Long userId) {
-       Workout workout = workoutRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+       Workout workout = workoutRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Workout not found"));
 
         if (!workout.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("You do not own this workout");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"You do not own this workout");
         }
         workoutRepository.delete(workout);
     }
@@ -58,10 +58,11 @@ public class WorkoutServiceImplementation implements WorkoutService {
     @Override
     public Workout updateWorkout(Long id, EditWorkoutRequestDTO dto, Long userId) {
         Workout workout = workoutRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Workout not found"));
 
         if (!workout.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException(
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
                     "You do not own this workout"
             );
         }

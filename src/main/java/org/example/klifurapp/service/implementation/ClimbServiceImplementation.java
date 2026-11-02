@@ -149,7 +149,7 @@ public class ClimbServiceImplementation implements ClimbService {
 
 
     @Override
-    public ClimbResponseDTO getClimb(Long id) {
+    public ClimbResponseDTO getClimb(Long id, Long userId, boolean isAdmin) {
 
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
@@ -158,6 +158,13 @@ public class ClimbServiceImplementation implements ClimbService {
                                 "Climb not found"
                         )
                 );
+
+        if (!isAdmin && !climb.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You do not own this climb"
+            );
+        }
 
         return new ClimbResponseDTO(
                 climb.getId(),

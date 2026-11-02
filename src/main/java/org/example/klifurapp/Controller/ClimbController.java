@@ -55,7 +55,16 @@ public class ClimbController {
     public ResponseEntity<Page<ClimbResponseDTO>> getClimbsByUser(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
+
+        Long currentUserId = (Long) authentication.getPrincipal();
+        if (!currentUserId.equals(userId) && !isAdmin(authentication)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You can only view your own climbing history"
+            );
+        }
 
         if (page < 0 || size < 1 || size > 100) {
             throw new ResponseStatusException(
@@ -81,8 +90,13 @@ public class ClimbController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<ClimbResponseDTO> getClimb(@PathVariable Long id) {
-        return ResponseEntity.ok(climbService.getClimb(id));
+    public ResponseEntity<ClimbResponseDTO> getClimb(
+            @PathVariable Long id,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(
+                climbService.getClimb(id, userId, isAdmin(authentication))
+        );
     }
 
     @GetMapping
@@ -125,5 +139,12 @@ public class ClimbController {
         climbService.deleteClimb(id, userId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN")
+                );
     }
 }

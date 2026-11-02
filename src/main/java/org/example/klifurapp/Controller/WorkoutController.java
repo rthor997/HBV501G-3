@@ -59,7 +59,16 @@ public class WorkoutController {
     public ResponseEntity<Page<WorkoutResponseDTO>> getWorkoutsByUser(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
+
+        Long currentUserId = (Long) authentication.getPrincipal();
+        if (!currentUserId.equals(userId) && !isAdmin(authentication)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You can only view your own workouts"
+            );
+        }
 
         if (page < 0 || size < 1 || size > 100) {
             throw new ResponseStatusException(
@@ -78,5 +87,12 @@ public class WorkoutController {
                 workoutService.getWorkoutsByUserId(userId, pageable);
 
         return ResponseEntity.ok(workouts);
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority ->
+                        authority.getAuthority().equals("ROLE_ADMIN")
+                );
     }
 }

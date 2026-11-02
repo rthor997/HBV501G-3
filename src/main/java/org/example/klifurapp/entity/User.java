@@ -76,6 +76,7 @@ public class User {
         this.role = role;
     }
 
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
             name = "user_friends",

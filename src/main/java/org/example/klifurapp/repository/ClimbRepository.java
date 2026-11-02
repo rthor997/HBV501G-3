@@ -24,8 +24,8 @@ public interface ClimbRepository extends JpaRepository<Climb, Long> {
         FROM Climb c
         WHERE c.user.id = :userId
         AND (:grade IS NULL OR c.difficultyGrade = :grade)
-        AND (:startDate IS NULL OR c.date >= :startDate)
-        AND (:endDate IS NULL OR c.date <= :endDate)
+        AND (CAST(:startDate AS LocalDate) IS NULL OR c.date >= :startDate)
+        AND (CAST(:endDate AS LocalDate) IS NULL OR c.date <= :endDate)
         """)
     Page<Climb> findFilteredClimbs(
             @Param("userId") Long userId,
