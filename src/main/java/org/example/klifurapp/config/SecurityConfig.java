@@ -1,5 +1,6 @@
 package org.example.klifurapp.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.example.klifurapp.security.JwtAuthenticationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -51,6 +52,24 @@ public class SecurityConfig {
                         ).permitAll()
                         // Everything else requires authentication
                         .anyRequest().authenticated()
+                )
+                // Handle authentication and authorization errors
+                .exceptionHandling(exceptions -> exceptions
+                        // Missing or invalid JWT -> 401
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(
+                                        HttpServletResponse.SC_UNAUTHORIZED,
+                                        "Unauthorized"
+                                )
+                        )
+
+                        // Authenticated but insufficient permissions -> 403
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendError(
+                                        HttpServletResponse.SC_FORBIDDEN,
+                                        "Forbidden"
+                                )
+                        )
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,
