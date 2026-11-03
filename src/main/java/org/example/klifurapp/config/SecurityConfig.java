@@ -1,6 +1,7 @@
 package org.example.klifurapp.config;
 
 import org.example.klifurapp.security.JwtAuthenticationFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -56,5 +57,17 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class
                 );
         return http.build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(
+            JwtAuthenticationFilter jwtAuthenticationFilter
+    ) {
+        FilterRegistrationBean<JwtAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(jwtAuthenticationFilter);
+
+        registration.setEnabled(false);
+
+        return registration;
     }
 }
