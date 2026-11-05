@@ -25,6 +25,7 @@ This is a REST API rather than a graphical website, so the root URL may not disp
 Some environment variables need to be set before the application can start  
 - Database connection
 - JWT configuration
+  
 variable names and expected values are in the `application.properties`
 
 Connection settings are stored as environment variables in the terminal, if you want to use our configuration contact us through email.
