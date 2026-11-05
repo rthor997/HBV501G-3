@@ -38,6 +38,8 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
+                        //root endpoint opið af öllum
+                        .requestMatchers("/").permitAll()
                         //anyone can make an account
                         .requestMatchers(
                                 HttpMethod.POST,
