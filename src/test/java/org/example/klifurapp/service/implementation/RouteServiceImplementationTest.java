@@ -45,7 +45,7 @@ class RouteServiceImplementationTest {
         authenticateAs(10L);
         Route route = route();
         User currentUser = user(10L, "anna");
-        when(routeRepository.findById(5L)).thenReturn(Optional.of(route));
+        when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route));
         when(userRepository.findById(10L)).thenReturn(Optional.of(currentUser));
 
         RouteDetailsResponseDTO result = service.getRouteDetails(5L);
@@ -67,7 +67,7 @@ class RouteServiceImplementationTest {
         Climb completed = new Climb();
         completed.setUser(friend);
 
-        when(routeRepository.findById(5L)).thenReturn(Optional.of(route));
+        when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route));
         when(userRepository.findById(10L)).thenReturn(Optional.of(currentUser));
         when(climbRepository.findByRouteIdAndUserIdIn(5L, List.of(20L)))
                 .thenReturn(List.of(completed));
@@ -81,7 +81,7 @@ class RouteServiceImplementationTest {
 
     @Test
     void getMissingRouteReturns404() {
-        when(routeRepository.findById(99L)).thenReturn(Optional.empty());
+        when(routeRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class, () -> service.getRouteDetails(99L));
@@ -92,7 +92,7 @@ class RouteServiceImplementationTest {
     @Test
     void getRouteDetailsWithMissingCurrentUserReturns404() {
         authenticateAs(10L);
-        when(routeRepository.findById(5L)).thenReturn(Optional.of(route()));
+        when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route()));
         when(userRepository.findById(10L)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
@@ -104,7 +104,7 @@ class RouteServiceImplementationTest {
     @Test
     void adminUpdateChangesProvidedFieldsOnly() {
         Route route = route();
-        when(routeRepository.findById(5L)).thenReturn(Optional.of(route));
+        when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route));
         when(routeRepository.save(route)).thenReturn(route);
 
         AdminUpdateRouteDTO dto = new AdminUpdateRouteDTO(
@@ -121,7 +121,7 @@ class RouteServiceImplementationTest {
 
     @Test
     void adminUpdateMissingRouteReturns404AndDoesNotSave() {
-        when(routeRepository.findById(99L)).thenReturn(Optional.empty());
+        when(routeRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -152,6 +152,64 @@ class RouteServiceImplementationTest {
         route.setGradingSystem(GradingSystem.V_SCALE);
         route.setClimbingStyle(ClimbingStyle.BOULDERING);
         route.setLocation("Gym");
+        route.setActive(true);
         return route;
     }
+
+    // UC18 service tests
+    @Test
+    void deleteRouteAsAdminSoftDeletesRoute() {
+        Route route = route();
+
+        when(routeRepository.findByIdAndActiveTrue(5L))
+                .thenReturn(Optional.of(route));
+
+        service.deleteRouteAsAdmin(5L);
+
+        assertFalse(route.isActive());
+        verify(routeRepository).save(route);
+    }
+    @Test
+    void deleteMissingRouteReturns404() {
+        when(routeRepository.findByIdAndActiveTrue(99L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.deleteRouteAsAdmin(99L)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
+        verify(routeRepository, never()).save(any(Route.class));
+    }
+
+    @Test
+    void deletingAlreadyInactiveRouteReturns404() {
+        when(routeRepository.findByIdAndActiveTrue(5L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.deleteRouteAsAdmin(5L)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+
+        verify(routeRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteRouteDoesNotDeleteClimbs() {
+        Route route = route();
+
+        when(routeRepository.findByIdAndActiveTrue(5L))
+                .thenReturn(Optional.of(route));
+
+        service.deleteRouteAsAdmin(5L);
+
+        verifyNoInteractions(climbRepository);
+    }
+
+
 }

@@ -26,6 +26,8 @@ public class CreateClimbRequestDTO {
 
     private WallIncline wallIncline;
 
+    private Long routeId;
+
     public GradingSystem getGradingSystem() {
         return gradingSystem;
     }
@@ -72,5 +74,9 @@ public class CreateClimbRequestDTO {
 
     public void setWallIncline(WallIncline wallIncline) {
         this.wallIncline = wallIncline;
+    }
+
+    public Long getRouteId() {
+        return routeId;
     }
 }

@@ -7,6 +7,9 @@ import jakarta.persistence.*;
 @Table(name = "routes")
 public class Route {
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,6 +39,14 @@ public class Route {
     private String characteristics;
 
     public Route() {
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public Long getId() {

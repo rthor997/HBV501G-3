@@ -42,7 +42,7 @@ public class RouteServiceImplementation implements RouteService {
     @Transactional(readOnly = true)
     public RouteDetailsResponseDTO getRouteDetails(Long routeId) {
 
-        Route route = routeRepository.findById(routeId)
+        Route route = routeRepository.findByIdAndActiveTrue(routeId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Route not found"
@@ -99,7 +99,7 @@ public class RouteServiceImplementation implements RouteService {
             Long routeId,
             AdminUpdateRouteDTO dto
     ) {
-        Route route = routeRepository.findById(routeId)
+        Route route = routeRepository.findByIdAndActiveTrue(routeId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Route not found"
@@ -138,5 +138,18 @@ public class RouteServiceImplementation implements RouteService {
         }
 
         return routeRepository.save(route);
+    }
+
+    @Override
+    public void deleteRouteAsAdmin(Long routeId) {
+        Route route = routeRepository.findByIdAndActiveTrue(routeId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Route not found"
+                        )
+                );
+        route.setActive(false);
+        routeRepository.save(route);
     }
 }

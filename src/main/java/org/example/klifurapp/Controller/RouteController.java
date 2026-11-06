@@ -44,4 +44,13 @@ public class RouteController {
         return ResponseEntity.ok(updatedRoute);
     }
 
+    @DeleteMapping("/admin/{routeId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteRouteAsAdmin(
+            @PathVariable Long routeId) {
+        routeService.deleteRouteAsAdmin(routeId);
+        return ResponseEntity.noContent().build();
+
+    }
+
 }

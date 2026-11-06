@@ -6,8 +6,10 @@ import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.GradingSystem;
+import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.ClimbRepository;
+import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
 import org.springframework.data.domain.Page;
@@ -24,12 +26,15 @@ public class ClimbServiceImplementation implements ClimbService {
 
     private final ClimbRepository climbRepository;
     private final UserRepository userRepository;
+    private final RouteRepository routeRepository;
 
     public ClimbServiceImplementation(
             ClimbRepository climbRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            RouteRepository routeRepository) {
         this.climbRepository = climbRepository;
         this.userRepository = userRepository;
+        this.routeRepository = routeRepository;
     }
 
     @Override
@@ -49,6 +54,17 @@ public class ClimbServiceImplementation implements ClimbService {
         climb.setNotes(dto.getNotes());
         climb.setWallIncline(dto.getWallIncline());
 
+        if (dto.getRouteId() != null) {
+            Route route = routeRepository
+                    .findByIdAndActiveTrue(dto.getRouteId())
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.NOT_FOUND,
+                                    "Route not found"
+                            )
+                    );
+            climb.setRoute(route);
+        }
         return climbRepository.save(climb);
     }
 
@@ -113,10 +129,6 @@ public class ClimbServiceImplementation implements ClimbService {
                         : climb.getDifficultyGrade();
 
         if (dto.gradingSystem() != null || dto.difficultyGrade() != null) {
-            validateGrade(gradingSystem, difficultyGrade);
-        }
-
-        if(dto.gradingSystem() != null || dto.difficultyGrade() != null) {
             validateGrade(gradingSystem, difficultyGrade);
         }
 

@@ -12,4 +12,5 @@ public interface RouteService {
 
     // Admin - Update Route
     Route updateRouteAsAdmin(Long routeId, AdminUpdateRouteDTO dto);
+    void deleteRouteAsAdmin(Long routeId);
 }
