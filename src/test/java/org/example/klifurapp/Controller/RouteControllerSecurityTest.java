@@ -62,4 +62,44 @@ class RouteControllerSecurityTest {
         user.setRole(role);
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
     }
+
+    // UC18
+    @Test
+    void ordinaryUserCannotDeleteRoute() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(
+                        delete("/api/routes/admin/42")
+                                .header("Authorization", "Bearer user-token")
+                )
+                .andExpect(status().isForbidden());
+
+        verify(routeService, never())
+                .deleteRouteAsAdmin(anyLong());
+    }
+
+    @Test
+    void adminCanDeleteRoute() throws Exception {
+        authenticate("admin-token", 22L, Role.ADMIN);
+
+        mvc.perform(
+                        delete("/api/routes/admin/42")
+                                .header("Authorization", "Bearer admin-token")
+                )
+                .andExpect(status().isNoContent());
+
+        verify(routeService).deleteRouteAsAdmin(42L);
+    }
+
+    @Test
+    void anonymousUserCannotDeleteRoute() throws Exception {
+        mvc.perform(
+                        delete("/api/routes/admin/42")
+                )
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(routeService);
+    }
+
+
 }
