@@ -3,6 +3,7 @@ package org.example.klifurapp.service.implementation;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.entity.*;
 import org.example.klifurapp.repository.ClimbRepository;
+import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,8 +21,9 @@ import static org.mockito.Mockito.*;
 class ClimbServiceImplementationTest {
     ClimbRepository climbs = mock(ClimbRepository.class);
     UserRepository users = mock(UserRepository.class);
+    RouteRepository routes = mock(RouteRepository.class);
     ClimbServiceImplementation service;
-    @BeforeEach void setup() { service = new ClimbServiceImplementation(climbs, users); }
+    @BeforeEach void setup() { service = new ClimbServiceImplementation(climbs, users, routes); }
 
     private User user(long id) throws Exception {
         User user = new User();
