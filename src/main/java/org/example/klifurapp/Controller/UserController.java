@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 
 @RestController
 @RequestMapping("/api/users")
@@ -62,6 +63,18 @@ public class UserController {
         UserResponseDTO userDto = userService.getUser(userId);
         return ResponseEntity.ok(userDto);
     }
+
+    // UC14 - View another user's public profile
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<PublicUserProfileResponseDTO> getPublicUserProfile(
+            @PathVariable Long id
+    ) {
+        PublicUserProfileResponseDTO profile =
+                userService.getPublicUserProfile(id);
+
+        return ResponseEntity.ok(profile);
+    }
+
     @PutMapping("/me")
     public ResponseEntity<User> updateUser(
             @RequestBody UpdateUserRequestDTO dto,
