@@ -16,12 +16,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import org.example.klifurapp.repository.RouteRepository;
 
 class ClimbServiceImplementationTest {
     ClimbRepository climbs = mock(ClimbRepository.class);
     UserRepository users = mock(UserRepository.class);
+    RouteRepository routes = mock(RouteRepository.class);
     ClimbServiceImplementation service;
-    @BeforeEach void setup() { service = new ClimbServiceImplementation(climbs, users); }
+    @BeforeEach void setup() { service = new ClimbServiceImplementation(climbs, users, routes); }
 
     private User user(long id) throws Exception {
         User user = new User();
