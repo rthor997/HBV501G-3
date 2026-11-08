@@ -62,6 +62,7 @@ public class UserController {
         UserResponseDTO userDto = userService.getUser(userId);
         return ResponseEntity.ok(userDto);
     }
+
     @PutMapping("/me")
     public ResponseEntity<User> updateUser(
             @RequestBody UpdateUserRequestDTO dto,
