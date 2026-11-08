@@ -11,6 +11,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
+import org.example.klifurapp.repository.ClimbRepository;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -23,6 +26,7 @@ class UserServiceImplementationTest {
 
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
+    @Mock ClimbRepository climbRepository;
     @InjectMocks UserServiceImplementation service;
 
     @Test
@@ -125,6 +129,53 @@ class UserServiceImplementationTest {
                 service.updateUserAsAdmin(1L,
                         new AdminUpdateUserDTO(null, "taken@example.com", null)));
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void getPublicProfileReturnsCorrectInformation() {
+        User user = user("anna", "anna@example.com");
+        setId(user, 5L);
+
+        when(userRepository.findById(5L))
+                .thenReturn(Optional.of(user));
+        when(climbRepository.countByUserId(5L))
+                .thenReturn(12L);
+
+        PublicUserProfileResponseDTO result =
+                service.getPublicUserProfile(5L);
+
+        assertEquals(5L, result.id());
+        assertEquals("anna", result.username());
+        assertEquals(12L, result.totalClimbs());
+    }
+
+    @Test
+    void getPublicProfileReturns404ForMissingUser() {
+        when(userRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getPublicUserProfile(999L)
+        );
+
+        assertEquals(404, exception.getStatusCode().value());
+
+        verifyNoInteractions(climbRepository);
+    }
+
+    @Test
+    void getPublicProfileReturnsZeroClimbs() {
+        User user = user("anna", "anna@example.com");
+        setId(user, 5L);
+
+        when(userRepository.findById(5L))
+                .thenReturn(Optional.of(user));
+
+        PublicUserProfileResponseDTO result =
+                service.getPublicUserProfile(5L);
+
+        assertEquals(0L, result.totalClimbs());
     }
 
     private static User user(String username, String email) {
