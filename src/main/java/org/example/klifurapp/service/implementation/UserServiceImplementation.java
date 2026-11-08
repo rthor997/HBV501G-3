@@ -9,16 +9,22 @@ import org.example.klifurapp.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
+import org.example.klifurapp.repository.ClimbRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserServiceImplementation implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ClimbRepository climbRepository;
 
-    public UserServiceImplementation(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImplementation(UserRepository userRepository, PasswordEncoder passwordEncoder, ClimbRepository climbRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.climbRepository = climbRepository;
     }
 
     @Override
@@ -34,6 +40,25 @@ public class UserServiceImplementation implements UserService {
         userDto.setUsername(user.getUsername());
 
         return userDto;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PublicUserProfileResponseDTO getPublicUserProfile(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        long totalClimbs = climbRepository.countByUserId(userId);
+
+        return new PublicUserProfileResponseDTO(
+                user.getId(),
+                user.getUsername(),
+                totalClimbs
+        );
     }
 
     @Override
