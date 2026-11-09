@@ -194,4 +194,18 @@ class FullApiIntegrationTest {
                 .count());
     }
 
+
+    @Test
+    void unauthenticatedRequestReturns401WithProblemDetail() throws Exception {
+        mvc.perform(get("/api/users/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.detail").value("Authentication required"))
+                .andExpect(jsonPath("$.instance").value("/api/users/me"));
+    }
+
+
 }
