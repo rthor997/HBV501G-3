@@ -14,30 +14,33 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.http.ProblemDetail;
+import java.net.URI;
 
 import java.time.Instant;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private ResponseEntity<ApiErrorResponseDTO> buildError(
+
+    private ResponseEntity<ProblemDetail> buildError(
             HttpStatus status,
             String message,
             HttpServletRequest request
     ) {
-        ApiErrorResponseDTO body = new ApiErrorResponseDTO(
-                status.value(),
-                status.getReasonPhrase(),
-                message,
-                Instant.now(),
-                request.getRequestURI()
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                status,
+                message
         );
 
-        return ResponseEntity.status(status).body(body);
+        problem.setTitle(status.getReasonPhrase());
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        return ResponseEntity.status(status).body(problem);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleNotFound(
+    public ResponseEntity<ProblemDetail> handleNotFound(
             ResourceNotFoundException ex,
             HttpServletRequest request
     ) {
@@ -45,7 +48,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleConflict(
+    public ResponseEntity<ProblemDetail> handleConflict(
             ConflictException ex,
             HttpServletRequest request
     ) {
@@ -53,7 +56,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleForbidden(
+    public ResponseEntity<ProblemDetail> handleForbidden(
             ForbiddenException ex,
             HttpServletRequest request
     ) {
@@ -61,7 +64,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleValidation(
+    public ResponseEntity<ProblemDetail> handleValidation(
             MethodArgumentNotValidException ex,
             HttpServletRequest request
     ) {
@@ -80,7 +83,7 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException.class,
             MethodArgumentTypeMismatchException.class
     })
-    public ResponseEntity<ApiErrorResponseDTO> handleBadRequest(
+    public ResponseEntity<ProblemDetail> handleBadRequest(
             Exception ex,
             HttpServletRequest request
     ) {
@@ -92,7 +95,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleResponseStatus(
+    public ResponseEntity<ProblemDetail> handleResponseStatus(
             ResponseStatusException ex,
             HttpServletRequest request
     ) {
@@ -119,7 +122,7 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleNoResourceFound(
+    public ResponseEntity<ProblemDetail> handleNoResourceFound(
             NoResourceFoundException ex,
             HttpServletRequest request
     ) {
@@ -132,7 +135,7 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleUnexpected(
+    public ResponseEntity<ProblemDetail> handleUnexpected(
             Exception ex,
             HttpServletRequest request
     ) {
@@ -145,7 +148,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleBadCredentials(
+    public ResponseEntity<ProblemDetail> handleBadCredentials(
             BadCredentialsException ex,
             HttpServletRequest request
     ) {
@@ -157,7 +160,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiErrorResponseDTO> handleAccessDenied(
+    public ResponseEntity<ProblemDetail> handleAccessDenied(
             AccessDeniedException ex,
             HttpServletRequest request) {
 

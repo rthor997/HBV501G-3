@@ -127,12 +127,12 @@ class FullApiIntegrationTest {
                         .content(accountJson("api_notadmin")))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentTypeCompatibleWith(
-                        MediaType.APPLICATION_JSON))
+                        MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.error").value("Forbidden"))
-                .andExpect(jsonPath("$.message").value("Access denied"))
-                .andExpect(jsonPath("$.path").value("/api/users/admin"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.title").value("Forbidden"))
+                .andExpect(jsonPath("$.detail").value("Access denied"))
+                .andExpect(jsonPath("$.instance").value("/api/users/admin"));
+
 
         assertTrue(users.findByUsername("api_notadmin").isEmpty());
     }
@@ -183,13 +183,11 @@ class FullApiIntegrationTest {
                         .content(accountJson("api_duplicate")))
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith(
-                        MediaType.APPLICATION_JSON))
+                        MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("Conflict"))
-                .andExpect(jsonPath("$.message")
-                        .value("Username is already taken"))
-                .andExpect(jsonPath("$.path").value("/api/users"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.title").value("Conflict"))
+                .andExpect(jsonPath("$.detail").value("Username is already taken"))
+                .andExpect(jsonPath("$.instance").value("/api/users"));
 
         assertEquals(1, users.findAll().stream()
                 .filter(u -> u.getUsername().equals("api_duplicate"))

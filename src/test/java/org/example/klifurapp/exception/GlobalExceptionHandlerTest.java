@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URI;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -62,14 +64,17 @@ class GlobalExceptionHandlerTest {
         }
     }
 
+
     @Test
     void missingResourceReturns404() throws Exception {
         mvc.perform(get("/test/not-found"))
                 .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("User not found"))
-                .andExpect(jsonPath("$.path").value("/test/not-found"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.title").value("Not Found"))
+                .andExpect(jsonPath("$.detail").value("User not found"))
+                .andExpect(jsonPath("$.instance").value("/test/not-found"));
     }
 
     @Test
@@ -86,27 +91,34 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.status").value(403));
     }
 
+
     @Test
     void responseStatusExceptionPreserves400() throws Exception {
         mvc.perform(get("/test/bad-request"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Invalid grade"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("Invalid grade"))
+                .andExpect(jsonPath("$.instance").value("/test/bad-request"));
     }
+
+
 
     @Test
     void unexpectedExceptionReturnsSafe500() throws Exception {
         mvc.perform(get("/test/unexpected"))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message")
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.title").value("Internal Server Error"))
+                .andExpect(jsonPath("$.detail")
                         .value("An unexpected error occurred"))
-                .andExpect(jsonPath("$.message")
+                .andExpect(jsonPath("$.detail")
                         .value(org.hamcrest.Matchers.not(
                                 org.hamcrest.Matchers.containsString(
                                         "Sensitive internal detail"
                                 )
                         )));
     }
-
 
     @Test
     void noResourceFoundExceptionReturns404() {
@@ -125,11 +137,16 @@ class GlobalExceptionHandlerTest {
 
         var response = handler.handleNoResourceFound(exception, request);
 
+
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals(404, response.getBody().status());
-        assertEquals("Not Found", response.getBody().error());
-        assertEquals("Resource not found", response.getBody().message());
-        assertEquals("/api/does-not-exist", response.getBody().path());
+        assertEquals(404, response.getBody().getStatus());
+        assertEquals("Not Found", response.getBody().getTitle());
+        assertEquals("Resource not found", response.getBody().getDetail());
+        assertEquals(
+                URI.create("/api/does-not-exist"),
+                response.getBody().getInstance()
+        );
+
     }
 
 
