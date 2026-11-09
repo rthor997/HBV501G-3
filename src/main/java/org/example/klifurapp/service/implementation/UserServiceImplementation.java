@@ -215,6 +215,8 @@ public class UserServiceImplementation implements UserService {
             imageStorage.delete(filename);
         } catch (IOException e) {
             // Log and arrange retry if file deletion fails.
+            System.err.println("Deletion of User's profile picture file failed: "
+                    + e.getMessage());
         }
     }
 
