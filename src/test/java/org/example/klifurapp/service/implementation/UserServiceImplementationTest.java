@@ -5,12 +5,17 @@ import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
+import org.example.klifurapp.exception.ResourceNotFoundException;
+import org.example.klifurapp.exception.ConflictException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
+import org.example.klifurapp.repository.ClimbRepository;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -23,6 +28,7 @@ class UserServiceImplementationTest {
 
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
+    @Mock ClimbRepository climbRepository;
     @InjectMocks UserServiceImplementation service;
 
     @Test
@@ -40,7 +46,7 @@ class UserServiceImplementationTest {
     void getMissingUserThrows() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.getUser(99L));
+        assertThrows(ResourceNotFoundException.class, () -> service.getUser(99L));
     }
 
     @Test
@@ -57,7 +63,7 @@ class UserServiceImplementationTest {
     void deleteMissingUserDoesNotCallDelete() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.deleteUser(99L));
+        assertThrows(ResourceNotFoundException.class, () -> service.deleteUser(99L));
         verify(userRepository, never()).delete(any(User.class));
     }
 
@@ -93,7 +99,7 @@ class UserServiceImplementationTest {
         // Current implementation compares IDs; assign IDs through reflection.
         setId(user, 1L);
         setId(other, 2L);
-        assertThrows(IllegalArgumentException.class, () -> service.updateUser(1L, dto));
+        assertThrows(ConflictException.class, () -> service.updateUser(1L, dto));
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -121,10 +127,57 @@ class UserServiceImplementationTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(other));
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(ConflictException.class, () ->
                 service.updateUserAsAdmin(1L,
                         new AdminUpdateUserDTO(null, "taken@example.com", null)));
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void getPublicProfileReturnsCorrectInformation() {
+        User user = user("anna", "anna@example.com");
+        setId(user, 5L);
+
+        when(userRepository.findById(5L))
+                .thenReturn(Optional.of(user));
+        when(climbRepository.countByUserId(5L))
+                .thenReturn(12L);
+
+        PublicUserProfileResponseDTO result =
+                service.getPublicUserProfile(5L);
+
+        assertEquals(5L, result.id());
+        assertEquals("anna", result.username());
+        assertEquals(12L, result.totalClimbs());
+    }
+
+    @Test
+    void getPublicProfileReturns404ForMissingUser() {
+        when(userRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.getPublicUserProfile(999L)
+        );
+
+        assertEquals("User not found", exception.getMessage());
+
+        verifyNoInteractions(climbRepository);
+    }
+
+    @Test
+    void getPublicProfileReturnsZeroClimbs() {
+        User user = user("anna", "anna@example.com");
+        setId(user, 5L);
+
+        when(userRepository.findById(5L))
+                .thenReturn(Optional.of(user));
+
+        PublicUserProfileResponseDTO result =
+                service.getPublicUserProfile(5L);
+
+        assertEquals(0L, result.totalClimbs());
     }
 
     private static User user(String username, String email) {

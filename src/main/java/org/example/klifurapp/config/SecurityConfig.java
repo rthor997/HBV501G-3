@@ -1,11 +1,12 @@
 package org.example.klifurapp.config;
 
-import jakarta.servlet.http.HttpServletResponse;
 import org.example.klifurapp.security.JwtAuthenticationFilter;
+import org.example.klifurapp.security.SecurityErrorWriter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,9 +20,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final SecurityErrorWriter securityErrorWriter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, SecurityErrorWriter securityErrorWriter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.securityErrorWriter = securityErrorWriter;
     }
 
     @Bean
@@ -57,19 +60,22 @@ public class SecurityConfig {
                 )
                 // Handle authentication and authorization errors
                 .exceptionHandling(exceptions -> exceptions
-                        // Missing or invalid JWT -> 401
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(
-                                        HttpServletResponse.SC_UNAUTHORIZED,
-                                        "Unauthorized"
+
+                        .authenticationEntryPoint((request, response, ex) ->
+                                securityErrorWriter.write(
+                                        request,
+                                        response,
+                                        HttpStatus.UNAUTHORIZED,
+                                        "Authentication required"
                                 )
                         )
 
-                        // Authenticated but insufficient permissions -> 403
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendError(
-                                        HttpServletResponse.SC_FORBIDDEN,
-                                        "Forbidden"
+                        .accessDeniedHandler((request, response, ex) ->
+                                securityErrorWriter.write(
+                                        request,
+                                        response,
+                                        HttpStatus.FORBIDDEN,
+                                        "Access denied"
                                 )
                         )
                 )

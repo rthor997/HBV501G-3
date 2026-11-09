@@ -3,11 +3,12 @@ package org.example.klifurapp.Controller;
 import org.springframework.core.io.Resource;
 import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
-import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.DTO.requests.CreateUserRequestDTO;
 import org.example.klifurapp.DTO.requests.LoginRequestDTO;
-import org.example.klifurapp.DTO.responses.LoginResponseDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
+import org.example.klifurapp.DTO.responses.LoginResponseDTO;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
+import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.ImageStorageService;
@@ -71,6 +72,17 @@ public class UserController {
         Long userId = (Long) authentication.getPrincipal();
         UserResponseDTO userDto = userService.getUser(userId);
         return ResponseEntity.ok(userDto);
+    }
+
+    // UC14 - View another user's public profile
+    @GetMapping("/{id}/profile")
+    public ResponseEntity<PublicUserProfileResponseDTO> getPublicUserProfile(
+            @PathVariable Long id
+    ) {
+        PublicUserProfileResponseDTO profile =
+                userService.getPublicUserProfile(id);
+
+        return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/me")

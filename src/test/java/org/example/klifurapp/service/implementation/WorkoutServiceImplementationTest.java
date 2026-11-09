@@ -7,6 +7,8 @@ import org.example.klifurapp.entity.User;
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.repository.WorkoutRepository;
+import org.example.klifurapp.exception.ResourceNotFoundException;
+import org.example.klifurapp.exception.ForbiddenException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -61,7 +63,7 @@ class WorkoutServiceImplementationTest {
     void logWorkoutRejectsMissingUserWithoutSaving() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> service.logWorkout(new LogWorkoutRequestDTO(), 99L));
         verify(workoutRepository, never()).save(any(Workout.class));
     }
@@ -81,7 +83,7 @@ class WorkoutServiceImplementationTest {
         Workout workout = workout(5L, user(10L));
         when(workoutRepository.findById(5L)).thenReturn(Optional.of(workout));
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        ForbiddenException error = assertThrows(ForbiddenException.class,
                 () -> service.deleteWorkout(5L, 20L));
 
         assertEquals("You do not own this workout", error.getMessage());
@@ -92,7 +94,7 @@ class WorkoutServiceImplementationTest {
     void deleteMissingWorkoutDoesNotDelete() {
         when(workoutRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.deleteWorkout(99L, 10L));
+        assertThrows(ResourceNotFoundException.class, () -> service.deleteWorkout(99L, 10L));
         verify(workoutRepository, never()).delete(any(Workout.class));
     }
 
@@ -125,7 +127,7 @@ class WorkoutServiceImplementationTest {
         EditWorkoutRequestDTO dto = new EditWorkoutRequestDTO();
         dto.setExerciseName("Deadlift");
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ForbiddenException.class,
                 () -> service.updateWorkout(5L, dto, 20L));
         verify(workoutRepository, never()).save(any(Workout.class));
         assertEquals("Squat", workout.getExerciseName());
@@ -135,7 +137,7 @@ class WorkoutServiceImplementationTest {
     void updateMissingWorkoutDoesNotSave() {
         when(workoutRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> service.updateWorkout(99L, new EditWorkoutRequestDTO(), 10L));
         verify(workoutRepository, never()).save(any(Workout.class));
     }

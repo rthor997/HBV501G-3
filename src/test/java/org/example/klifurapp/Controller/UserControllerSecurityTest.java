@@ -5,9 +5,11 @@ import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.security.JwtAuthenticationFilter;
+import org.example.klifurapp.security.SecurityErrorWriter;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.JwtService;
 import org.example.klifurapp.service.UserService;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -15,6 +17,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
@@ -28,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @EnableWebSecurity
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, SecurityErrorWriter.class})
 class UserControllerSecurityTest {
 
     @Autowired MockMvc mvc;
@@ -132,6 +136,51 @@ class UserControllerSecurityTest {
         mvc.perform(delete("/api/users/me"))
                 .andExpect(status().is4xxClientError());
         verify(userService, never()).deleteUser(any());
+    }
+
+    @Test
+    void authenticatedUserCanViewAnotherUsersProfile() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        when(userService.getPublicUserProfile(22L))
+                .thenReturn(new PublicUserProfileResponseDTO(
+                        22L, "otherClimber", 15L
+                ));
+
+        mvc.perform(get("/api/users/22/profile")
+                        .header("Authorization", "Bearer user-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(22))
+                .andExpect(jsonPath("$.username").value("otherClimber"))
+                .andExpect(jsonPath("$.totalClimbs").value(15))
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.passwordHash").doesNotExist())
+                .andExpect(jsonPath("$.role").doesNotExist());
+
+        verify(userService).getPublicUserProfile(22L);
+    }
+
+    @Test
+    void unauthenticatedUserCannotViewProfile() throws Exception {
+        mvc.perform(get("/api/users/22/profile"))
+                .andExpect(status().isUnauthorized());
+
+        verify(userService, never()).getPublicUserProfile(any());
+    }
+
+    @Test
+    void nonexistentProfileReturns404() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        when(userService.getPublicUserProfile(999L))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        mvc.perform(get("/api/users/999/profile")
+                        .header("Authorization", "Bearer user-token"))
+                .andExpect(status().isNotFound());
     }
 
     private void authenticate(String token, Long id, Role role) {

@@ -1,11 +1,10 @@
 
 package org.example.klifurapp.Controller;
 
-import org.example.klifurapp.DTO.responses.RouteDetailsResponseDTO;
 import org.example.klifurapp.DTO.requests.AdminUpdateRouteDTO;
+import org.example.klifurapp.DTO.responses.RouteDetailsResponseDTO;
 import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.service.RouteService;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

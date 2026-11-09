@@ -6,9 +6,11 @@ import org.example.klifurapp.DTO.requests.LoginRequestDTO;
 import org.example.klifurapp.DTO.responses.LoginResponseDTO;
 import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
+import org.example.klifurapp.exception.ConflictException;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.JwtService;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,11 +33,11 @@ public class AuthServiceImplementation implements AuthService {
     @Override
     public User register(CreateUserRequestDTO dto) {
         if(userRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username is already taken");
+            throw new ConflictException("Username is already taken");
         }
 
         if(userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email is already registered");
+            throw new ConflictException("Email is already registered");
         }
         User user = new User();
 
@@ -50,11 +52,11 @@ public class AuthServiceImplementation implements AuthService {
     @Override
     public User createAdmin(CreateUserRequestDTO dto) {
         if(userRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username is already taken");
+            throw new ConflictException("Username is already taken");
         }
 
         if(userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email is already registered");
+            throw new ConflictException("Email is already registered");
         }
 
         User admin = new User();
@@ -70,11 +72,11 @@ public class AuthServiceImplementation implements AuthService {
     public LoginResponseDTO login(LoginRequestDTO dto) {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid email or password")
+                        new BadCredentialsException("Invalid email or password")
                 );
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new BadCredentialsException("Invalid email or password");
         }
         String token = jwtService.generateToken(user);
         LoginResponseDTO responseDto = new LoginResponseDTO();
