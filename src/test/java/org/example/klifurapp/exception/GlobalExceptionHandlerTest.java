@@ -1,0 +1,105 @@
+
+package org.example.klifurapp.exception;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+class GlobalExceptionHandlerTest {
+
+    private MockMvc mvc;
+
+    @BeforeEach
+    void setup() {
+        mvc = MockMvcBuilders
+                .standaloneSetup(new TestController())
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+
+    @RestController
+    static class TestController {
+
+        @GetMapping("/test/not-found")
+        void notFound() {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        @GetMapping("/test/conflict")
+        void conflict() {
+            throw new ConflictException("Email already registered");
+        }
+
+        @GetMapping("/test/forbidden")
+        void forbidden() {
+            throw new ForbiddenException("Access denied");
+        }
+
+        @GetMapping("/test/bad-request")
+        void badRequest() {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid grade"
+            );
+        }
+
+        @GetMapping("/test/unexpected")
+        void unexpected() {
+            throw new RuntimeException("Sensitive internal detail");
+        }
+    }
+
+    @Test
+    void missingResourceReturns404() throws Exception {
+        mvc.perform(get("/test/not-found"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("User not found"))
+                .andExpect(jsonPath("$.path").value("/test/not-found"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    void duplicateResourceReturns409() throws Exception {
+        mvc.perform(get("/test/conflict"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void forbiddenReturns403() throws Exception {
+        mvc.perform(get("/test/forbidden"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
+    }
+
+    @Test
+    void responseStatusExceptionPreserves400() throws Exception {
+        mvc.perform(get("/test/bad-request"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid grade"));
+    }
+
+    @Test
+    void unexpectedExceptionReturnsSafe500() throws Exception {
+        mvc.perform(get("/test/unexpected"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message")
+                        .value("An unexpected error occurred"))
+                .andExpect(jsonPath("$.message")
+                        .value(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString(
+                                        "Sensitive internal detail"
+                                )
+                        )));
+    }
+}

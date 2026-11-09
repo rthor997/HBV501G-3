@@ -115,14 +115,28 @@ class FullApiIntegrationTest {
                 .andExpect(status().isNoContent());
         assertFalse(climbs.existsById(id));
     }
-    @Test void regularUserCannotUseAdminEndpoint() throws Exception {
+
+    @Test
+    void regularUserCannotUseAdminEndpoint() throws Exception {
         createUser("api_regular");
+
         mvc.perform(post("/api/users/admin")
-                        .header("Authorization", "Bearer " + token("api_regular"))
-                        .contentType(MediaType.APPLICATION_JSON).content(accountJson("api_notadmin")))
-                .andExpect(status().isForbidden());
+                        .header("Authorization",
+                                "Bearer " + token("api_regular"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(accountJson("api_notadmin")))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.message").value("Access denied"))
+                .andExpect(jsonPath("$.path").value("/api/users/admin"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
         assertTrue(users.findByUsername("api_notadmin").isEmpty());
     }
+
     @Test void adminCanCreateAnotherAdmin() throws Exception {
         createAdmin("api_superadmin");
         mvc.perform(post("/api/users/admin")
@@ -158,4 +172,28 @@ class FullApiIntegrationTest {
                         .param("size", "0").header("Authorization", "Bearer " + jwt))
                 .andExpect(status().isBadRequest());
     }
+
+
+    @Test
+    void duplicateRegistrationReturns409WithErrorBody() throws Exception {
+        createUser("api_duplicate");
+
+        mvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(accountJson("api_duplicate")))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message")
+                        .value("Username is already taken"))
+                .andExpect(jsonPath("$.path").value("/api/users"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        assertEquals(1, users.findAll().stream()
+                .filter(u -> u.getUsername().equals("api_duplicate"))
+                .count());
+    }
+
 }

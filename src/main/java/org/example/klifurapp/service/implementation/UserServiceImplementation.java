@@ -2,16 +2,18 @@ package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
+import org.example.klifurapp.exception.ConflictException;
+import org.example.klifurapp.exception.ResourceNotFoundException;
+import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
-import org.example.klifurapp.repository.ClimbRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -31,7 +33,7 @@ public class UserServiceImplementation implements UserService {
     public UserResponseDTO getUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found, ID mismatch")
+                        new ResourceNotFoundException("User not found")
                 );
 
         // Hér má síðar bæta við upplýsingum um user sem mætti sækja eins og profile pic
@@ -66,7 +68,7 @@ public class UserServiceImplementation implements UserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found, ID mismatch")
+                        new ResourceNotFoundException("User not found")
                 );
 
         userRepository.delete(user);
@@ -76,13 +78,13 @@ public class UserServiceImplementation implements UserService {
     public User updateUser(Long id, UpdateUserRequestDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(()->
-                        new IllegalArgumentException("User Not Found")
+                        new ResourceNotFoundException("User not found")
                 );
         if (dto.getUsername() != null) {
             userRepository.findByUsername(dto.getUsername())
                     .ifPresent(existingUser -> {
                         if (!existingUser.getId().equals(id)) {
-                            throw new IllegalArgumentException(
+                            throw new ConflictException(
                                     "Username is already taken"
                             );
                         }
@@ -102,13 +104,13 @@ public class UserServiceImplementation implements UserService {
     public User updateUserAsAdmin(Long id, AdminUpdateUserDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(()->
-                        new IllegalArgumentException("User Not Found")
+                        new ResourceNotFoundException("User not found")
                 );
         if (dto.username() != null) {
             userRepository.findByUsername(dto.username())
                     .ifPresent(existingUser -> {
                         if (!existingUser.getId().equals(id)) {
-                            throw new IllegalArgumentException(
+                            throw new ConflictException(
                                     "Username is already taken"
                             );
                         }
@@ -120,7 +122,7 @@ public class UserServiceImplementation implements UserService {
             userRepository.findByEmail(dto.email())
                     .ifPresent(existingUser -> {
                         if (!existingUser.getId().equals(id)) {
-                            throw new IllegalArgumentException(
+                            throw new ConflictException(
                                     "Email is already registered"
                             );
                         }

@@ -5,6 +5,8 @@ import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
+import org.example.klifurapp.exception.ResourceNotFoundException;
+import org.example.klifurapp.exception.ConflictException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,7 +46,7 @@ class UserServiceImplementationTest {
     void getMissingUserThrows() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.getUser(99L));
+        assertThrows(ResourceNotFoundException.class, () -> service.getUser(99L));
     }
 
     @Test
@@ -61,7 +63,7 @@ class UserServiceImplementationTest {
     void deleteMissingUserDoesNotCallDelete() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.deleteUser(99L));
+        assertThrows(ResourceNotFoundException.class, () -> service.deleteUser(99L));
         verify(userRepository, never()).delete(any(User.class));
     }
 
@@ -97,7 +99,7 @@ class UserServiceImplementationTest {
         // Current implementation compares IDs; assign IDs through reflection.
         setId(user, 1L);
         setId(other, 2L);
-        assertThrows(IllegalArgumentException.class, () -> service.updateUser(1L, dto));
+        assertThrows(ConflictException.class, () -> service.updateUser(1L, dto));
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -125,7 +127,7 @@ class UserServiceImplementationTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(other));
 
-        assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(ConflictException.class, () ->
                 service.updateUserAsAdmin(1L,
                         new AdminUpdateUserDTO(null, "taken@example.com", null)));
         verify(userRepository, never()).save(any(User.class));
