@@ -6,6 +6,8 @@ import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.JwtService;
+import org.example.klifurapp.exception.ConflictException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -39,7 +41,7 @@ class AuthServiceImplementationTest {
         CreateUserRequestDTO dto = new CreateUserRequestDTO();
         dto.setUsername("anna"); dto.setEmail("taken@example.com"); dto.setPassword("secret123");
         when(users.findByEmail("taken@example.com")).thenReturn(Optional.of(new User()));
-        assertThrows(IllegalArgumentException.class, () -> service.register(dto));
+        assertThrows(ConflictException.class, () -> service.register(dto));
         verify(users, never()).save(any());
     }
 
@@ -47,7 +49,7 @@ class AuthServiceImplementationTest {
         CreateUserRequestDTO dto = new CreateUserRequestDTO();
         dto.setUsername("taken"); dto.setEmail("new@example.com"); dto.setPassword("secret123");
         when(users.findByUsername("taken")).thenReturn(Optional.of(new User()));
-        assertThrows(IllegalArgumentException.class, () -> service.register(dto));
+        assertThrows(ConflictException.class, () -> service.register(dto));
         verify(users, never()).save(any());
     }
 
@@ -64,13 +66,13 @@ class AuthServiceImplementationTest {
         User user = new User(); user.setEmail("anna@example.com"); user.setPasswordHash("hashed");
         when(users.findByEmail("anna@example.com")).thenReturn(Optional.of(user));
         LoginRequestDTO dto = new LoginRequestDTO(); dto.setEmail("anna@example.com"); dto.setPassword("wrong");
-        assertThrows(IllegalArgumentException.class, () -> service.login(dto));
+        assertThrows(BadCredentialsException.class, () -> service.login(dto));
         verify(jwt, never()).generateToken(any());
     }
 
     @Test void loginRejectsUnknownEmail() {
         LoginRequestDTO dto = new LoginRequestDTO(); dto.setEmail("unknown@example.com"); dto.setPassword("secret");
-        assertThrows(IllegalArgumentException.class, () -> service.login(dto));
+        assertThrows(BadCredentialsException.class, () -> service.login(dto));
         verify(jwt, never()).generateToken(any());
     }
 }

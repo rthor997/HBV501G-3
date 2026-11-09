@@ -5,6 +5,7 @@ import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.security.JwtAuthenticationFilter;
+import org.example.klifurapp.security.SecurityErrorWriter;
 import org.example.klifurapp.service.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @WebMvcTest(WorkoutController.class)
 @EnableWebSecurity
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, SecurityErrorWriter.class})
 class WorkoutControllerSecurityTest {
     @Autowired MockMvc mvc;
     @MockitoBean WorkoutService workoutService;

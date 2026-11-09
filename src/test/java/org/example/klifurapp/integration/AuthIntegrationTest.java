@@ -5,6 +5,7 @@ import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.AuthService;
+import org.example.klifurapp.exception.ConflictException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,7 +46,7 @@ class AuthIntegrationTest {
     @Test void duplicateUsernameIsRejectedWithoutSavingSecondUser() {
         authService.register(request("anna", "anna@example.com"));
         long before = userRepository.count();
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        ConflictException error = assertThrows(ConflictException.class,
             () -> authService.register(request("anna", "different@example.com")));
         assertEquals("Username is already taken", error.getMessage());
         assertEquals(before, userRepository.count());
@@ -54,7 +55,7 @@ class AuthIntegrationTest {
     @Test void duplicateEmailIsRejectedWithoutSavingSecondUser() {
         authService.register(request("anna", "anna@example.com"));
         long before = userRepository.count();
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        ConflictException error = assertThrows(ConflictException.class,
             () -> authService.register(request("different", "anna@example.com")));
         assertEquals("Email is already registered", error.getMessage());
         assertEquals(before, userRepository.count());
