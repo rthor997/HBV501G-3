@@ -4,6 +4,7 @@ import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
@@ -11,4 +12,7 @@ public interface UserService {
     void deleteUser(Long id);
     User updateUser(Long id, UpdateUserRequestDTO dto);
     User updateUserAsAdmin(Long id, AdminUpdateUserDTO dto);
+    String updateProfilePicture(Long userId, MultipartFile file);
+    void deleteProfilePicture(Long userId);
+    String getProfilePictureFilename(Long userId);
 }
