@@ -2,9 +2,9 @@ package org.example.klifurapp.service;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
-import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 
 public interface UserService {
 

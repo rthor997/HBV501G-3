@@ -1,19 +1,19 @@
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
-import org.example.klifurapp.DTO.requests.LogWorkoutRequestDTO;
 import org.example.klifurapp.DTO.requests.EditWorkoutRequestDTO;
+import org.example.klifurapp.DTO.requests.LogWorkoutRequestDTO;
 import org.example.klifurapp.DTO.requests.WorkoutResponseDTO;
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.service.WorkoutService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
