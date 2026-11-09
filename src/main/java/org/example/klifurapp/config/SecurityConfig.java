@@ -13,15 +13,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.example.klifurapp.security.SecurityErrorWriter;
+import org.springframework.http.HttpStatus;
 
 @Configuration
 @EnableMethodSecurity // so I can use hasRole 'admin'
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final SecurityErrorWriter securityErrorWriter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, SecurityErrorWriter securityErrorWriter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.securityErrorWriter = securityErrorWriter;
     }
 
     @Bean
@@ -57,19 +61,22 @@ public class SecurityConfig {
                 )
                 // Handle authentication and authorization errors
                 .exceptionHandling(exceptions -> exceptions
-                        // Missing or invalid JWT -> 401
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendError(
-                                        HttpServletResponse.SC_UNAUTHORIZED,
-                                        "Unauthorized"
+
+                        .authenticationEntryPoint((request, response, ex) ->
+                                securityErrorWriter.write(
+                                        request,
+                                        response,
+                                        HttpStatus.UNAUTHORIZED,
+                                        "Authentication required"
                                 )
                         )
 
-                        // Authenticated but insufficient permissions -> 403
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendError(
-                                        HttpServletResponse.SC_FORBIDDEN,
-                                        "Forbidden"
+                        .accessDeniedHandler((request, response, ex) ->
+                                securityErrorWriter.write(
+                                        request,
+                                        response,
+                                        HttpStatus.FORBIDDEN,
+                                        "Access denied"
                                 )
                         )
                 )

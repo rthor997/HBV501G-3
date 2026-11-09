@@ -5,6 +5,7 @@ import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.security.JwtAuthenticationFilter;
+import org.example.klifurapp.security.SecurityErrorWriter;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.JwtService;
 import org.example.klifurapp.service.UserService;
@@ -31,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @EnableWebSecurity
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, SecurityErrorWriter.class})
 class UserControllerSecurityTest {
 
     @Autowired MockMvc mvc;
