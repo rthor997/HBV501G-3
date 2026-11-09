@@ -1,5 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.service.ImageStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -91,8 +92,7 @@ public class ImageStorageServiceImplementation implements ImageStorageService {
 
         // Checks whether the file exists
         if (!Files.isRegularFile(path)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
+            throw new ResourceNotFoundException(
                     "Image not found"
             );
         }

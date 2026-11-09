@@ -150,9 +150,9 @@ public class UserServiceImplementation implements UserService {
             MultipartFile file
     ) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"
-                ));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
 
         String oldFilename = user.getProfilePictureFilename();
         String newFilename;
@@ -168,6 +168,7 @@ public class UserServiceImplementation implements UserService {
 
         try {
             user.setProfilePictureFilename(newFilename);
+            // Saves immediately, doesn't turn in the transaction
             userRepository.saveAndFlush(user);
         } catch (RuntimeException e) {
 
@@ -175,6 +176,7 @@ public class UserServiceImplementation implements UserService {
             try {
                 imageStorage.delete(newFilename);
             } catch (IOException cleanupError) {
+                // Adds Exception to RuntimeException
                 e.addSuppressed(cleanupError);
             }
 
@@ -188,6 +190,7 @@ public class UserServiceImplementation implements UserService {
             } catch (IOException e) {
                 // Log the cleanup failure.
                 // The new image is still associated with the user.
+                System.err.println("" + e.getMessage());
             }
         }
 
@@ -198,9 +201,9 @@ public class UserServiceImplementation implements UserService {
     public void deleteProfilePicture(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"
-                ));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
 
         String filename = user.getProfilePictureFilename();
 
