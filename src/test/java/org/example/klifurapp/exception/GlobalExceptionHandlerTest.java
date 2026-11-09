@@ -3,7 +3,11 @@ package org.example.klifurapp.exception;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -102,4 +106,31 @@ class GlobalExceptionHandlerTest {
                                 )
                         )));
     }
+
+
+    @Test
+    void noResourceFoundExceptionReturns404() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/api/does-not-exist");
+
+
+        NoResourceFoundException exception =
+                new NoResourceFoundException(
+                        HttpMethod.GET,
+                        "/api/does-not-exist",
+                        "api/does-not-exist"
+                );
+
+        var response = handler.handleNoResourceFound(exception, request);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(404, response.getBody().status());
+        assertEquals("Not Found", response.getBody().error());
+        assertEquals("Resource not found", response.getBody().message());
+        assertEquals("/api/does-not-exist", response.getBody().path());
+    }
+
+
 }
