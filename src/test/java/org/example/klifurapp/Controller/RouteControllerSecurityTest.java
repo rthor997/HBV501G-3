@@ -33,7 +33,7 @@ class RouteControllerSecurityTest {
         authenticate("user-token", 11L, Role.USER);
         mvc.perform(get("/api/routes/42").header("Authorization", "Bearer user-token"))
                 .andExpect(status().isOk());
-        verify(routeService).getRouteDetails(42L);
+        verify(routeService).getRouteDetails(42L, 11L);
     }
     @Test void anonymousUserCannotRequestRouteDetails() throws Exception {
         mvc.perform(get("/api/routes/42")).andExpect(status().is4xxClientError());

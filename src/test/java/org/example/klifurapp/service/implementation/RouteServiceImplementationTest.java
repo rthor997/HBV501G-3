@@ -10,15 +10,12 @@ import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -35,20 +32,14 @@ class RouteServiceImplementationTest {
     @Mock UserRepository userRepository;
     @InjectMocks RouteServiceImplementation service;
 
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
-    }
-
     @Test
     void getRouteDetailsReturnsRouteWithoutFriends() {
-        authenticateAs(10L);
         Route route = route();
         User currentUser = user(10L, "anna");
         when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route));
         when(userRepository.findById(10L)).thenReturn(Optional.of(currentUser));
 
-        RouteDetailsResponseDTO result = service.getRouteDetails(5L);
+        RouteDetailsResponseDTO result = service.getRouteDetails(5L, 10L);
 
         assertEquals("Blue Wall", result.name());
         assertEquals("V3", result.difficultyGrade());
@@ -59,7 +50,6 @@ class RouteServiceImplementationTest {
 
     @Test
     void getRouteDetailsIncludesFriendWhoCompletedIt() {
-        authenticateAs(10L);
         Route route = route();
         User currentUser = user(10L, "anna");
         User friend = user(20L, "bob");
@@ -72,7 +62,7 @@ class RouteServiceImplementationTest {
         when(climbRepository.findByRouteIdAndUserIdIn(5L, List.of(20L)))
                 .thenReturn(List.of(completed));
 
-        RouteDetailsResponseDTO result = service.getRouteDetails(5L);
+        RouteDetailsResponseDTO result = service.getRouteDetails(5L, 10L);
 
         assertEquals(1, result.friendsWhoCompleted().size());
         assertEquals("bob", result.friendsWhoCompleted().get(0).username());
@@ -84,19 +74,18 @@ class RouteServiceImplementationTest {
         when(routeRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class, () -> service.getRouteDetails(99L));
+                ResponseStatusException.class, () -> service.getRouteDetails(99L, 10L));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     }
 
     @Test
     void getRouteDetailsWithMissingCurrentUserReturns404() {
-        authenticateAs(10L);
         when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route()));
         when(userRepository.findById(10L)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class, () -> service.getRouteDetails(5L));
+                ResponseStatusException.class, () -> service.getRouteDetails(5L, 10L));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     }
@@ -133,10 +122,6 @@ class RouteServiceImplementationTest {
         verify(routeRepository, never()).save(any(Route.class));
     }
 
-    private static void authenticateAs(Long userId) {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userId, null, List.of()));
-    }
 
     private static User user(Long id, String username) {
         User user = new User();

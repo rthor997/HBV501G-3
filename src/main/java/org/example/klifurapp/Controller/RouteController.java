@@ -8,6 +8,7 @@ import org.example.klifurapp.service.RouteService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,10 +24,13 @@ public class RouteController {
     // UC12 - View Route Details
     @GetMapping("/{routeId}")
     public ResponseEntity<RouteDetailsResponseDTO> getRouteDetails(
-            @PathVariable Long routeId) {
+            @PathVariable Long routeId,
+            Authentication authentication) {
+
+        Long userId = (Long) authentication.getPrincipal();
 
         RouteDetailsResponseDTO route =
-                routeService.getRouteDetails(routeId);
+                routeService.getRouteDetails(routeId, userId);
 
         return ResponseEntity.ok(route);
     }

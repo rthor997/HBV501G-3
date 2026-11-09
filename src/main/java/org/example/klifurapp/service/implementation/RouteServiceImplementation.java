@@ -13,7 +13,6 @@ import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.RouteService;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -40,19 +39,13 @@ public class RouteServiceImplementation implements RouteService {
     // UC12 - View Route Details
     @Override
     @Transactional(readOnly = true)
-    public RouteDetailsResponseDTO getRouteDetails(Long routeId) {
+    public RouteDetailsResponseDTO getRouteDetails(Long routeId, Long currentUserId) {
 
         Route route = routeRepository.findByIdAndActiveTrue(routeId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Route not found"
                 ));
-
-        Long currentUserId =
-                (Long) SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal();
 
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResponseStatusException(

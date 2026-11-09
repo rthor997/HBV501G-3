@@ -8,8 +8,7 @@ import org.example.klifurapp.entity.Route;
 public interface RouteService {
 
     // View Route Details
-    RouteDetailsResponseDTO getRouteDetails(Long routeId);
-
+    RouteDetailsResponseDTO getRouteDetails(Long routeId, Long currentUserId);
     // Admin - Update Route
     Route updateRouteAsAdmin(Long routeId, AdminUpdateRouteDTO dto);
     void deleteRouteAsAdmin(Long routeId);
