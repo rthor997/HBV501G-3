@@ -2,8 +2,8 @@ package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.AdminUpdateClimbDTO;
-import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.service.ClimbService;

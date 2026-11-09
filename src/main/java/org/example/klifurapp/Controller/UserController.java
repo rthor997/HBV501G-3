@@ -2,11 +2,12 @@ package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
-import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.DTO.requests.CreateUserRequestDTO;
 import org.example.klifurapp.DTO.requests.LoginRequestDTO;
-import org.example.klifurapp.DTO.responses.LoginResponseDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
+import org.example.klifurapp.DTO.responses.LoginResponseDTO;
+import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
+import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
 import org.example.klifurapp.service.UserService;
@@ -15,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 
 @RestController
 @RequestMapping("/api/users")

@@ -2,8 +2,8 @@
 package org.example.klifurapp.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.example.klifurapp.DTO.responses.ApiErrorResponseDTO;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.springframework.http.ProblemDetail;
-import java.net.URI;
 
-import java.time.Instant;
+import java.net.URI;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
