@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 
@@ -115,6 +116,20 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiErrorResponseDTO> handleNoResourceFound(
+            NoResourceFoundException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                "Resource not found",
+                request
+        );
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponseDTO> handleUnexpected(

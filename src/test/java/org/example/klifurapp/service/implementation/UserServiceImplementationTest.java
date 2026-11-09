@@ -156,12 +156,12 @@ class UserServiceImplementationTest {
         when(userRepository.findById(999L))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> service.getPublicUserProfile(999L)
         );
 
-        assertEquals(404, exception.getStatusCode().value());
+        assertEquals("User not found", exception.getMessage());
 
         verifyNoInteractions(climbRepository);
     }

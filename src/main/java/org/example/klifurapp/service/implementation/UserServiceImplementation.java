@@ -10,11 +10,9 @@ import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.UserService;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserServiceImplementation implements UserService {
@@ -49,10 +47,7 @@ public class UserServiceImplementation implements UserService {
     public PublicUserProfileResponseDTO getPublicUserProfile(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         long totalClimbs = climbRepository.countByUserId(userId);
 
