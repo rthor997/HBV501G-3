@@ -7,15 +7,13 @@ import org.example.klifurapp.DTO.responses.RouteFriendDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.entity.User;
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.RouteService;
-
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -42,16 +40,12 @@ public class RouteServiceImplementation implements RouteService {
     public RouteDetailsResponseDTO getRouteDetails(Long routeId, Long currentUserId) {
 
         Route route = routeRepository.findByIdAndActiveTrue(routeId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Route not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found")
+                );
 
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found")
+                );
 
         List<Long> friendIds = currentUser.getFriends()
                 .stream()
@@ -93,10 +87,8 @@ public class RouteServiceImplementation implements RouteService {
             AdminUpdateRouteDTO dto
     ) {
         Route route = routeRepository.findByIdAndActiveTrue(routeId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Route not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found")
+                );
 
         if (dto.name() != null) {
             route.setName(dto.name());
@@ -136,11 +128,7 @@ public class RouteServiceImplementation implements RouteService {
     @Override
     public void deleteRouteAsAdmin(Long routeId) {
         Route route = routeRepository.findByIdAndActiveTrue(routeId)
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Route not found"
-                        )
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found")
                 );
         route.setActive(false);
         routeRepository.save(route);
