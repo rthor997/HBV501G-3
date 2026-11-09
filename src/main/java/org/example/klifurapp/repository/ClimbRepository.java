@@ -43,4 +43,6 @@ public interface ClimbRepository extends JpaRepository<Climb, Long> {
             List<Long> userIds
     );
 
+    long countByUserId(Long userId);
+
 }
