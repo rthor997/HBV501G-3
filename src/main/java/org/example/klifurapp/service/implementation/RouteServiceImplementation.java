@@ -2,8 +2,10 @@
 package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateRouteDTO;
+import org.example.klifurapp.DTO.requests.CreateRouteRequestDTO;
 import org.example.klifurapp.DTO.responses.RouteDetailsResponseDTO;
 import org.example.klifurapp.DTO.responses.RouteFriendDTO;
+import org.example.klifurapp.DTO.responses.RouteResponseDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.entity.User;
@@ -32,6 +34,35 @@ public class RouteServiceImplementation implements RouteService {
         this.routeRepository = routeRepository;
         this.climbRepository = climbRepository;
         this.userRepository = userRepository;
+    }
+
+    @Override
+    public RouteResponseDTO createRoute(CreateRouteRequestDTO dto) {
+        Route route = new Route();
+
+        route.setName(dto.name());
+        route.setGradingSystem(dto.gradingSystem());
+        route.setDifficultyGrade(dto.difficultyGrade());
+        route.setLocation(dto.location());
+        route.setClimbingStyle(dto.climbingStyle());
+        route.setWallIncline(dto.wallIncline());
+        route.setIndoor(dto.indoor());
+        route.setCharacteristics(dto.characteristics());
+        route.setActive(true);
+
+        Route savedRoute = routeRepository.save(route);
+
+        return new RouteResponseDTO(
+                savedRoute.getId(),
+                savedRoute.getName(),
+                savedRoute.getDifficultyGrade(),
+                savedRoute.getGradingSystem().name(),
+                savedRoute.getClimbingStyle().name(),
+                savedRoute.getWallIncline() != null ? savedRoute.getWallIncline().name():null,
+                savedRoute.getCharacteristics(),
+                savedRoute.isIndoor(),
+                savedRoute.getLocation()
+        );
     }
 
     // UC12 - View Route Details
