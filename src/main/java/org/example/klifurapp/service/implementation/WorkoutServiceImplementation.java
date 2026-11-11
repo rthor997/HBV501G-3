@@ -79,10 +79,7 @@ public class WorkoutServiceImplementation implements WorkoutService {
             Long userId, Pageable pageable) {
 
         if (!userRepository.existsById(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "User not found"
-            );
+            throw new ResourceNotFoundException("User not found");
         }
 
         return workoutRepository.findByUserId(userId, pageable)
