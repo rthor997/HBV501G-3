@@ -1,6 +1,7 @@
 package org.example.klifurapp.DTO.requests;
 
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import org.example.klifurapp.entity.ClimbingStyle;
 import org.example.klifurapp.entity.GradingSystem;
@@ -13,8 +14,9 @@ public class CreateClimbRequestDTO {
     @NotNull
     private GradingSystem gradingSystem;
 
-    @NotBlank
     private String difficultyGrade;
+
+    private Long colourGradeId;
 
     @NotNull
     private ClimbingStyle climbingStyle;
@@ -78,5 +80,22 @@ public class CreateClimbRequestDTO {
 
     public Long getRouteId() {
         return routeId;
+    }
+
+    public Long getColourGradeId() {
+        return colourGradeId;
+    }
+
+    public void setColourGradeId(Long colourGradeId) {
+        this.colourGradeId = colourGradeId;
+    }
+
+    @JsonIgnore
+    @AssertTrue(message = "difficultyGrade is required, or colourGradeId when gradingSystem is COLOUR")
+    public boolean isGradeProvided() {
+        if (gradingSystem == GradingSystem.COLOUR) {
+            return colourGradeId != null;
+        }
+        return difficultyGrade != null && !difficultyGrade.isBlank();
     }
 }

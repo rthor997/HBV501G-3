@@ -48,6 +48,24 @@ class ClimbControllerSecurityTest {
                 .andExpect(status().isCreated());
         verify(climbService).createClimb(any(), eq(11L));
     }
+    @Test void colourClimbWithColourGradeIdIsAccepted() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+        mvc.perform(post("/api/climbs").header("Authorization", "Bearer user-token")
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                    {"gradingSystem":"COLOUR","colourGradeId":5,"climbingStyle":"BOULDERING","date":"2026-11-03"}
+                    """))
+                .andExpect(status().isCreated());
+        verify(climbService).createClimb(any(), eq(11L));
+    }
+    @Test void colourClimbWithoutColourGradeIdReturns400() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+        mvc.perform(post("/api/climbs").header("Authorization", "Bearer user-token")
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                    {"gradingSystem":"COLOUR","difficultyGrade":"Blue","climbingStyle":"BOULDERING","date":"2026-11-03"}
+                    """))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(climbService);
+    }
     @Test void unauthenticatedUserCannotCreateClimb() throws Exception {
         mvc.perform(post("/api/climbs").contentType(MediaType.APPLICATION_JSON).content(VALID_CLIMB))
                 .andExpect(status().is4xxClientError());

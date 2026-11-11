@@ -5,6 +5,7 @@ import org.example.klifurapp.entity.*;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
+import org.example.klifurapp.service.ColourGradeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
@@ -24,7 +25,8 @@ class ClimbServiceImplementationTest {
     UserRepository users = mock(UserRepository.class);
     RouteRepository routes = mock(RouteRepository.class);
     ClimbServiceImplementation service;
-    @BeforeEach void setup() { service = new ClimbServiceImplementation(climbs, users, routes); }
+    ColourGradeService colourGrades = mock(ColourGradeService.class);
+    @BeforeEach void setup() { service = new ClimbServiceImplementation(climbs, users, routes, colourGrades); }
 
     private User user(long id) throws Exception {
         User user = new User();
@@ -81,5 +83,37 @@ class ClimbServiceImplementationTest {
         var result = service.getClimbsByUserId(10L,page);
         assertEquals(1, result.getTotalElements());
         assertEquals(1, result.getContent().size());
+    }
+
+    @Test void colourClimbUsesColourGradeAsDifficulty() throws Exception {
+        User owner = user(10L);
+        ColourGrade blue = new ColourGrade(); blue.setColour("Blue");
+        when(users.findById(10L)).thenReturn(Optional.of(owner));
+        when(colourGrades.useColourGrade(5L, owner)).thenReturn(blue);
+        when(climbs.save(any(Climb.class))).thenAnswer(inv -> inv.getArgument(0));
+        CreateClimbRequestDTO dto = new CreateClimbRequestDTO();
+        dto.setGradingSystem(GradingSystem.COLOUR); dto.setColourGradeId(5L);
+        dto.setClimbingStyle(ClimbingStyle.BOULDERING); dto.setDate(LocalDate.of(2026,11,1));
+        Climb result = service.createClimb(dto, 10L);
+        assertEquals("Blue", result.getDifficultyGrade());
+        assertSame(blue, result.getColourGrade());
+    }
+
+    @Test void colourClimbWithoutColourGradeIdIsRejected() throws Exception {
+        when(users.findById(10L)).thenReturn(Optional.of(user(10L)));
+        CreateClimbRequestDTO dto = new CreateClimbRequestDTO();
+        dto.setGradingSystem(GradingSystem.COLOUR); dto.setDifficultyGrade("Blue");
+        assertEquals(400, assertThrows(ResponseStatusException.class, () -> service.createClimb(dto,10L)).getStatusCode().value());
+        verifyNoInteractions(colourGrades);
+        verify(climbs, never()).save(any());
+    }
+
+    @Test void colourGradeIdWithFontIsRejected() throws Exception {
+        when(users.findById(10L)).thenReturn(Optional.of(user(10L)));
+        CreateClimbRequestDTO dto = new CreateClimbRequestDTO();
+        dto.setGradingSystem(GradingSystem.FONT); dto.setDifficultyGrade("6A"); dto.setColourGradeId(5L);
+        assertEquals(400, assertThrows(ResponseStatusException.class, () -> service.createClimb(dto,10L)).getStatusCode().value());
+        verifyNoInteractions(colourGrades);
+        verify(climbs, never()).save(any());
     }
 }

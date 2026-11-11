@@ -5,6 +5,7 @@ import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
 import org.example.klifurapp.entity.Climb;
+import org.example.klifurapp.entity.ColourGrade;
 import org.example.klifurapp.entity.GradingSystem;
 import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.entity.User;
@@ -12,6 +13,8 @@ import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
+import org.example.klifurapp.service.ColourGradeService;
+import org.example.klifurapp.service.GradeValidator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,28 +30,52 @@ public class ClimbServiceImplementation implements ClimbService {
     private final ClimbRepository climbRepository;
     private final UserRepository userRepository;
     private final RouteRepository routeRepository;
+    private final ColourGradeService colourGradeService;
 
     public ClimbServiceImplementation(
             ClimbRepository climbRepository,
             UserRepository userRepository,
-            RouteRepository routeRepository) {
+            RouteRepository routeRepository,
+            ColourGradeService colourGradeService) {
         this.climbRepository = climbRepository;
         this.userRepository = userRepository;
         this.routeRepository = routeRepository;
+        this.colourGradeService = colourGradeService;
     }
 
     @Override
+    @Transactional
     public Climb createClimb(CreateClimbRequestDTO dto, Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found")
                 );
-        validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
         Climb climb = new Climb();
         climb.setUser(user);
         climb.setGradingSystem(dto.getGradingSystem());
-        climb.setDifficultyGrade(dto.getDifficultyGrade());
+
+        if (dto.getGradingSystem() == GradingSystem.COLOUR) {
+            if (dto.getColourGradeId() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "colourGradeId is required when gradingSystem is COLOUR"
+                );
+            }
+            ColourGrade colourGrade = colourGradeService.useColourGrade(dto.getColourGradeId(), user);
+            climb.setColourGrade(colourGrade);
+            climb.setDifficultyGrade(colourGrade.getColour());
+        } else {
+            if (dto.getColourGradeId() != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "colourGradeId can only be used when gradingSystem is COLOUR"
+                );
+            }
+            validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
+            climb.setDifficultyGrade(dto.getDifficultyGrade());
+        }
+
         climb.setClimbingStyle(dto.getClimbingStyle());
         climb.setDate(dto.getDate());
         climb.setNotes(dto.getNotes());
@@ -69,17 +96,7 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     private void validateGrade(GradingSystem system, String grade) {
-        boolean valid = switch (system) {
-            case V_SCALE -> grade.matches("V(0|[1-9][0-9]*)\\+?");
-            case FONT -> grade.matches("[3-9][ABC]\\+?");
-        };
-
-        if (!valid) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid difficulty grade for " + system
-            );
-        }
+        GradeValidator.validate(system, grade);
     }
 
     @Override
@@ -134,6 +151,7 @@ public class ClimbServiceImplementation implements ClimbService {
 
         if(dto.gradingSystem() != null) {
             climb.setGradingSystem(dto.gradingSystem());
+            climb.setColourGrade(null);
         }
 
         if(dto.difficultyGrade() != null) {
