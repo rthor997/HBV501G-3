@@ -2,21 +2,20 @@
 package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateRouteDTO;
+import org.example.klifurapp.DTO.requests.CreateRouteRequestDTO;
 import org.example.klifurapp.DTO.responses.RouteDetailsResponseDTO;
 import org.example.klifurapp.DTO.responses.RouteFriendDTO;
+import org.example.klifurapp.DTO.responses.RouteResponseDTO;
 import org.example.klifurapp.entity.Climb;
 import org.example.klifurapp.entity.Route;
 import org.example.klifurapp.entity.User;
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.RouteService;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -37,28 +36,47 @@ public class RouteServiceImplementation implements RouteService {
         this.userRepository = userRepository;
     }
 
+    @Override
+    public RouteResponseDTO createRoute(CreateRouteRequestDTO dto) {
+        Route route = new Route();
+
+        route.setName(dto.name());
+        route.setGradingSystem(dto.gradingSystem());
+        route.setDifficultyGrade(dto.difficultyGrade());
+        route.setLocation(dto.location());
+        route.setClimbingStyle(dto.climbingStyle());
+        route.setWallIncline(dto.wallIncline());
+        route.setIndoor(dto.indoor());
+        route.setCharacteristics(dto.characteristics());
+        route.setActive(true);
+
+        Route savedRoute = routeRepository.save(route);
+
+        return new RouteResponseDTO(
+                savedRoute.getId(),
+                savedRoute.getName(),
+                savedRoute.getDifficultyGrade(),
+                savedRoute.getGradingSystem().name(),
+                savedRoute.getClimbingStyle().name(),
+                savedRoute.getWallIncline() != null ? savedRoute.getWallIncline().name():null,
+                savedRoute.getCharacteristics(),
+                savedRoute.isIndoor(),
+                savedRoute.getLocation()
+        );
+    }
+
     // UC12 - View Route Details
     @Override
     @Transactional(readOnly = true)
-    public RouteDetailsResponseDTO getRouteDetails(Long routeId) {
+    public RouteDetailsResponseDTO getRouteDetails(Long routeId, Long currentUserId) {
 
         Route route = routeRepository.findByIdAndActiveTrue(routeId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Route not found"
-                ));
-
-        Long currentUserId =
-                (Long) SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal();
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found")
+                );
 
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found")
+                );
 
         List<Long> friendIds = currentUser.getFriends()
                 .stream()
@@ -100,10 +118,8 @@ public class RouteServiceImplementation implements RouteService {
             AdminUpdateRouteDTO dto
     ) {
         Route route = routeRepository.findByIdAndActiveTrue(routeId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Route not found"
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found")
+                );
 
         if (dto.name() != null) {
             route.setName(dto.name());
@@ -143,11 +159,7 @@ public class RouteServiceImplementation implements RouteService {
     @Override
     public void deleteRouteAsAdmin(Long routeId) {
         Route route = routeRepository.findByIdAndActiveTrue(routeId)
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Route not found"
-                        )
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found")
                 );
         route.setActive(false);
         routeRepository.save(route);
