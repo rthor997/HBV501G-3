@@ -1,5 +1,6 @@
 package org.example.klifurapp.Controller;
 
+import org.springframework.core.io.Resource;
 import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.requests.CreateUserRequestDTO;
@@ -10,12 +11,17 @@ import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.service.AuthService;
+import org.example.klifurapp.service.ImageStorageService;
 import org.example.klifurapp.service.UserService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,10 +29,14 @@ public class UserController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final ImageStorageService imageStorageService;
 
-    public UserController(UserService userService, AuthService authService) {
+    public UserController(UserService userService,
+                          AuthService authService,
+                          ImageStorageService imageStorageService) {
         this.userService = userService;
         this.authService = authService;
+        this.imageStorageService = imageStorageService;
     }
     //public endpoint
     @PostMapping
@@ -94,5 +104,53 @@ public class UserController {
             @RequestBody AdminUpdateUserDTO dto) {
         User updatedUser = userService.updateUserAsAdmin(userId, dto);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PutMapping(
+            value = "/me/profile-picture",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<String> updateProfilePicture(
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        userService.updateProfilePicture(userId, file);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me/profile-picture")
+    public ResponseEntity<Void> deleteProfilePicture(
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        userService.deleteProfilePicture(userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/profile-picture")
+    public ResponseEntity<Resource> getProfilePicture(
+            @PathVariable Long id
+    ) throws IOException {
+
+        String filename = userService.getProfilePictureFilename(id);
+
+        if (filename == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Resource image = imageStorageService.load(filename);
+
+        MediaType mediaType = filename.endsWith(".png")
+                ? MediaType.IMAGE_PNG
+                : MediaType.IMAGE_JPEG;
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .body(image);
     }
 }

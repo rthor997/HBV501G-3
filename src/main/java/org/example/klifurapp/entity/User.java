@@ -24,6 +24,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(name = "profile_picture_filename")
+    private String profilePictureFilename;
+
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.REMOVE
@@ -92,4 +95,10 @@ public class User {
         this.friends = friends;
     }
 
+    public String getProfilePictureFilename() {
+        return profilePictureFilename;
+    }
+
+    public void setProfilePictureFilename(String newFilename) {
+    }
 }
