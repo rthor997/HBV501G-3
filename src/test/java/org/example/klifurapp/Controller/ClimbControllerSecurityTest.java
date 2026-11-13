@@ -1,8 +1,10 @@
 package org.example.klifurapp.Controller;
 
+import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.config.SecurityConfig;
-import org.example.klifurapp.entity.Role;
-import org.example.klifurapp.entity.User;
+import org.example.klifurapp.entity.*;
+import org.example.klifurapp.exception.ForbiddenException;
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.security.JwtAuthenticationFilter;
 import org.example.klifurapp.security.SecurityErrorWriter;
@@ -15,6 +17,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
+
+import java.time.LocalDate;
 import java.util.Optional;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -119,4 +123,96 @@ class ClimbControllerSecurityTest {
         user.setRole(role);
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
     }
+
+    @Test
+    void authenticatedUserCanUpdateClimb() throws Exception {
+        authenticate("user-token",11L, Role.USER);
+        when(climbService.updateClimb(eq(42L),eq(11L),any())).thenReturn(
+                new ClimbResponseDTO(42L, GradingSystem.V_SCALE, "V5", ClimbingStyle.BOULDERING,
+                        LocalDate.of(2026,11,11),"Updated notes", WallIncline.OVERHANG)
+        );
+        mvc.perform(patch("/api/climbs/42").header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                    {
+                      "difficultyGrade": "V5",
+                      "notes": "Updated notes"
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(42))
+                .andExpect(jsonPath("$.difficultyGrade").value("V5"))
+                .andExpect(jsonPath("$.notes").value("Updated notes"));
+        verify(climbService).updateClimb(eq(42L), eq(11L), any());
+    }
+
+    @Test
+    void unauthenticatedUserCannotUpdateClimb() throws Exception {
+        mvc.perform(patch("/api/climbs/42").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                      "notes": "Updated"
+                    }
+                    """)
+                ).andExpect(status().isUnauthorized());
+        verifyNoInteractions(climbService);
+    }
+
+    @Test
+    void updatingAnotherUsersClimbReturns403() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+        when(climbService.updateClimb(eq(42L), eq(11L), any()
+        )).thenThrow(
+                new ForbiddenException("You do not own this climb")
+        );
+        mvc.perform(patch("/api/climbs/42")
+                                .header(
+                                        "Authorization",
+                                        "Bearer user-token"
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                    {
+                      "notes": "Trying to edit"
+                    }
+                    """)
+                ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updatingMissingClimbReturns404() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+        when(climbService.updateClimb(eq(999L), eq(11L), any()
+        )).thenThrow(new ResourceNotFoundException("Climb not found"));
+        mvc.perform(
+                        patch("/api/climbs/999")
+                                .header(
+                                        "Authorization",
+                                        "Bearer user-token"
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                    {
+                      "notes": "Updated"
+                    }
+                    """)
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateWithInvalidClimbingStyleReturns400() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+        mvc.perform(patch("/api/climbs/42").header("Authorization", "Bearer user-token")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                    {
+                      "climbingStyle": "INVALID_STYLE"
+                    }
+                    """)
+                )
+                .andExpect(status().isBadRequest());
+        verify(climbService, never()).updateClimb(anyLong(), anyLong(), any());
+    }
+
+
 }

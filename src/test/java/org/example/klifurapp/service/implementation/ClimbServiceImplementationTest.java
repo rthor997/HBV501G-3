@@ -1,7 +1,11 @@
 package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
+import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.entity.*;
+import org.example.klifurapp.exception.ForbiddenException;
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
@@ -82,4 +86,116 @@ class ClimbServiceImplementationTest {
         assertEquals(1, result.getTotalElements());
         assertEquals(1, result.getContent().size());
     }
+
+    @Test
+    void ownerCanUpdateClimb() throws Exception {
+        User owner = user(10L);
+
+        Climb climb = new Climb();
+        climb.setUser(owner);
+        climb.setGradingSystem(GradingSystem.V_SCALE);
+        climb.setDifficultyGrade("V3");
+        climb.setClimbingStyle(ClimbingStyle.BOULDERING);
+        climb.setDate(LocalDate.of(2026, 11, 1));
+        climb.setNotes("Old notes");
+        climb.setWallIncline(WallIncline.OVERHANG);
+
+        Field idField = Climb.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(climb, 5L);
+
+        when(climbs.findById(5L))
+                .thenReturn(Optional.of(climb));
+
+        when(climbs.save(climb))
+                .thenReturn(climb);
+
+        UpdateClimbRequestDTO dto =
+                new UpdateClimbRequestDTO(
+                        null,
+                        "V5",
+                        null,
+                        null,
+                        "Updated notes",
+                        null
+                );
+
+        ClimbResponseDTO result =
+                service.updateClimb(5L, 10L, dto);
+
+        assertEquals("V5", result.difficultyGrade());
+        assertEquals("Updated notes", result.notes());
+
+        verify(climbs).save(climb);
+    }
+
+    @Test
+    void partialUpdatePreservesUnspecifiedFields() throws Exception {
+        User owner = user(10L);
+        Climb climb = new Climb();
+        climb.setUser(owner);
+        climb.setGradingSystem(GradingSystem.V_SCALE);
+        climb.setDifficultyGrade("V3");
+        climb.setClimbingStyle(ClimbingStyle.BOULDERING);
+        climb.setDate(LocalDate.of(2026, 11, 1));
+        climb.setNotes("Old notes");
+        climb.setWallIncline(WallIncline.OVERHANG);
+        when(climbs.findById(5L)).thenReturn(Optional.of(climb));
+        when(climbs.save(climb)).thenReturn(climb);
+        UpdateClimbRequestDTO dto =
+                new UpdateClimbRequestDTO(null, null, null,
+                        null, "New notes", null);
+        ClimbResponseDTO result = service.updateClimb(5L, 10L, dto);
+        assertEquals("V3", result.difficultyGrade());
+        assertEquals(GradingSystem.V_SCALE, result.gradingSystem());
+        assertEquals(ClimbingStyle.BOULDERING, result.climbingStyle());
+        assertEquals(LocalDate.of(2026, 11, 1), result.date());
+        assertEquals(WallIncline.OVERHANG, result.wallIncline());
+        assertEquals("New notes", result.notes());
+    }
+
+    @Test
+    void otherUserCannotUpdateClimb() throws Exception {
+        Climb climb = new Climb();
+        climb.setUser(user(10L));
+        when(climbs.findById(5L)).thenReturn(Optional.of(climb));
+        UpdateClimbRequestDTO dto =
+                new UpdateClimbRequestDTO(null, null,
+                        null, null, "Trying to edit", null);
+        assertThrows(ForbiddenException.class, () -> service.updateClimb(5L, 20L, dto));
+        verify(climbs, never()).save(any());
+    }
+
+
+    @Test
+    void updatingMissingClimbThrowsResourceNotFoundException() {
+        when(climbs.findById(999L)).thenReturn(Optional.empty());
+        UpdateClimbRequestDTO dto =
+                new UpdateClimbRequestDTO(null, null,
+                        null, null, "New notes", null);
+        assertThrows(ResourceNotFoundException.class, () -> service.updateClimb(999L, 10L, dto));
+        verify(climbs, never()).save(any());
+    }
+
+    @Test
+    void updateWithInvalidGradeIsRejectedAndNotSaved() throws Exception {
+        Climb climb = new Climb();
+        climb.setUser(user(10L));
+        climb.setGradingSystem(GradingSystem.V_SCALE);
+        climb.setDifficultyGrade("V3");
+        when(climbs.findById(5L)).thenReturn(Optional.of(climb));
+        UpdateClimbRequestDTO dto =
+                new UpdateClimbRequestDTO(null, "invalid",
+                        null, null, null, null);
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.updateClimb(5L, 10L, dto)
+        );
+        assertEquals(400, exception.getStatusCode().value());
+        verify(climbs, never()).save(any());
+    }
+
+
+
+
 }
