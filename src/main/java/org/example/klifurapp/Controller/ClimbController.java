@@ -3,6 +3,7 @@ package org.example.klifurapp.Controller;
 import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
 import org.example.klifurapp.entity.Climb;
@@ -39,6 +40,18 @@ public class ClimbController {
         Long userId = (Long) authentication.getPrincipal();
         Climb climb = climbService.createClimb(dto, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(climb);
+    }
+
+    @PatchMapping("/{climbId}")
+    public ResponseEntity<ClimbResponseDTO> updateClimb(
+            @PathVariable Long climbId,
+            @RequestBody UpdateClimbRequestDTO dto,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        ClimbResponseDTO updatedClimb = climbService.updateClimb(climbId, userId, dto);
+
+        return ResponseEntity.ok(updatedClimb);
     }
 
     @PutMapping("/admin/{climbId}")

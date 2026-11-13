@@ -2,22 +2,21 @@ package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
-import org.example.klifurapp.entity.Climb;
-import org.example.klifurapp.entity.GradingSystem;
-import org.example.klifurapp.entity.Route;
-import org.example.klifurapp.entity.User;
+import org.example.klifurapp.entity.*;
+import org.example.klifurapp.exception.BadRequestException;
+import org.example.klifurapp.exception.ForbiddenException;
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
@@ -42,7 +41,7 @@ public class ClimbServiceImplementation implements ClimbService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found")
+                        new ResourceNotFoundException("User not found")
                 );
         validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
         Climb climb = new Climb();
@@ -58,10 +57,7 @@ public class ClimbServiceImplementation implements ClimbService {
             Route route = routeRepository
                     .findByIdAndActiveTrue(dto.getRouteId())
                     .orElseThrow(() ->
-                            new ResponseStatusException(
-                                    HttpStatus.NOT_FOUND,
-                                    "Route not found"
-                            )
+                            new ResourceNotFoundException("Route not found")
                     );
             climb.setRoute(route);
         }
@@ -75,10 +71,7 @@ public class ClimbServiceImplementation implements ClimbService {
         };
 
         if (!valid) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid difficulty grade for " + system
-            );
+            throw new BadRequestException("Invalid difficulty grade for " + system);
         }
     }
 
@@ -88,10 +81,7 @@ public class ClimbServiceImplementation implements ClimbService {
             Long userId, Pageable pageable) {
 
         if (!userRepository.existsById(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "User not found"
-            );
+            throw new ResourceNotFoundException("User not found");
         }
 
         return climbRepository.findByUserId(userId, pageable)
@@ -108,54 +98,56 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
+    public ClimbResponseDTO updateClimb(
+            Long climbId,
+            Long userId,
+            UpdateClimbRequestDTO dto) {
+        Climb climb = climbRepository.findById(climbId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Climb not found"));
+
+        if (!climb.getUser().getId().equals(userId)) {
+            throw new ForbiddenException("You do not own this climb");
+        }
+
+        applyClimbUpdates(
+                climb,
+                dto.gradingSystem(),
+                dto.difficultyGrade(),
+                dto.climbingStyle(),
+                dto.date(),
+                dto.notes(),
+                dto.wallIncline()
+        );
+
+        Climb savedClimb = climbRepository.save(climb);
+
+        return new ClimbResponseDTO(
+                savedClimb.getId(),
+                savedClimb.getGradingSystem(),
+                savedClimb.getDifficultyGrade(),
+                savedClimb.getClimbingStyle(),
+                savedClimb.getDate(),
+                savedClimb.getNotes(),
+                savedClimb.getWallIncline()
+        );
+    }
+
+    @Override
     public Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto) {
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Climb not found"
-                        )
+                        new ResourceNotFoundException("Climb not found")
                 );
-        // passa að gradesystem og difficulty grade séu samrænt
-        // gera ráð fyrir partial update
-        GradingSystem gradingSystem =
-                dto.gradingSystem() != null
-                        ? dto.gradingSystem()
-                        : climb.getGradingSystem();
-
-        String difficultyGrade =
-                dto.difficultyGrade() != null
-                        ? dto.difficultyGrade()
-                        : climb.getDifficultyGrade();
-
-        if (dto.gradingSystem() != null || dto.difficultyGrade() != null) {
-            validateGrade(gradingSystem, difficultyGrade);
-        }
-
-        if(dto.gradingSystem() != null) {
-            climb.setGradingSystem(dto.gradingSystem());
-        }
-
-        if(dto.difficultyGrade() != null) {
-            climb.setDifficultyGrade(dto.difficultyGrade());
-        }
-
-        if(dto.climbingStyle() != null) {
-            climb.setClimbingStyle(dto.climbingStyle());
-        }
-
-        if(dto.date() != null) {
-            climb.setDate(dto.date());
-        }
-
-        if(dto.notes() != null) {
-            climb.setNotes(dto.notes());
-        }
-
-        if (dto.wallIncline() != null) {
-            climb.setWallIncline(dto.wallIncline());
-        }
-
+        applyClimbUpdates(
+                climb,
+                dto.gradingSystem(),
+                dto.difficultyGrade(),
+                dto.climbingStyle(),
+                dto.date(),
+                dto.notes(),
+                dto.wallIncline()
+        );
         return climbRepository.save(climb);
     }
 
@@ -165,10 +157,7 @@ public class ClimbServiceImplementation implements ClimbService {
 
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Climb not found"
-                        )
+                        new ResourceNotFoundException("Climb not found")
                 );
 
         return new ClimbResponseDTO(
@@ -217,19 +206,60 @@ public class ClimbServiceImplementation implements ClimbService {
 
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Climb not found"
-                        )
+                        new ResourceNotFoundException("Climb not found")
                 );
 
         if (!climb.getUser().getId().equals(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You do not own this climb"
-            );
+            throw new ForbiddenException("You do not own this climb");
+        }
+        climbRepository.delete(climb);
+    }
+
+
+    private void applyClimbUpdates(
+            Climb climb,
+            GradingSystem gradingSystem,
+            String difficultyGrade,
+            ClimbingStyle climbingStyle,
+            LocalDate date,
+            String notes,
+            WallIncline wallIncline) {
+        GradingSystem resultingSystem =
+                gradingSystem != null
+                        ? gradingSystem
+                        : climb.getGradingSystem();
+
+        String resultingGrade =
+                difficultyGrade != null
+                        ? difficultyGrade
+                        : climb.getDifficultyGrade();
+
+        if (gradingSystem != null || difficultyGrade != null) {
+            validateGrade(resultingSystem, resultingGrade);
         }
 
-        climbRepository.delete(climb);
+        if (gradingSystem != null) {
+            climb.setGradingSystem(gradingSystem);
+        }
+
+        if (difficultyGrade != null) {
+            climb.setDifficultyGrade(difficultyGrade);
+        }
+
+        if (climbingStyle != null) {
+            climb.setClimbingStyle(climbingStyle);
+        }
+
+        if (date != null) {
+            climb.setDate(date);
+        }
+
+        if (notes != null) {
+            climb.setNotes(notes);
+        }
+
+        if (wallIncline != null) {
+            climb.setWallIncline(wallIncline);
+        }
     }
 }

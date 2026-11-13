@@ -2,6 +2,7 @@ package org.example.klifurapp.service;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
 import org.example.klifurapp.entity.Climb;
@@ -14,6 +15,7 @@ public interface ClimbService {
 
     Page<ClimbResponseDTO> getClimbsByUserId(Long userId, Pageable pageable);
     Climb createClimb(CreateClimbRequestDTO dto, Long userId);
+    ClimbResponseDTO updateClimb(Long climbId, Long userId, UpdateClimbRequestDTO dto);
     Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto);
     ClimbResponseDTO getClimb(Long id);
     Page<ClimbSummaryResponseDTO> getClimbingHistory(
