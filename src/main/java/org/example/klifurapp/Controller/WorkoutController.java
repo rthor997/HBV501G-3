@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.EditWorkoutRequestDTO;
 import org.example.klifurapp.DTO.requests.LogWorkoutRequestDTO;
 import org.example.klifurapp.DTO.requests.WorkoutResponseDTO;
+import org.example.klifurapp.DTO.responses.PageResponseDTO;
 import org.example.klifurapp.entity.Workout;
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.service.WorkoutService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,12 +16,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/workouts")
 public class WorkoutController {
 
+    private static final int MAX_PAGE_SIZE = 50;
     private final WorkoutService workoutService;
 
     public WorkoutController(WorkoutService workoutService) {
@@ -56,27 +58,26 @@ public class WorkoutController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<WorkoutResponseDTO>> getWorkoutsByUser(
+    public ResponseEntity<PageResponseDTO<WorkoutResponseDTO>> getWorkoutsByUser(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "20") int size) {
 
-        if (page < 0 || size < 1 || size > 100) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid pagination parameters"
-            );
-        }
+        Pageable pageable = createPageable(page, size);
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.DESC, "id")
-        );
-
-        Page<WorkoutResponseDTO> workouts =
+        Page<WorkoutResponseDTO> result =
                 workoutService.getWorkoutsByUserId(userId, pageable);
 
-        return ResponseEntity.ok(workouts);
+        return ResponseEntity.ok(PageResponseDTO.from(result));
+    }
+
+    private Pageable createPageable(int page, int size) {
+        if (page < 0) {
+            throw new BadRequestException("Page must be zero or greater");
+        }
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new BadRequestException("Size must be between 1 and " + MAX_PAGE_SIZE);
+        }
+        return PageRequest.of(page,size,Sort.by(Sort.Order.desc("id")));
     }
 }
