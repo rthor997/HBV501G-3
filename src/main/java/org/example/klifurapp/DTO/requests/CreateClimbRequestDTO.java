@@ -2,6 +2,7 @@ package org.example.klifurapp.DTO.requests;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.example.klifurapp.entity.ClimbingStyle;
 import org.example.klifurapp.entity.GradingSystem;
 import org.example.klifurapp.entity.WallIncline;
@@ -22,6 +23,7 @@ public class CreateClimbRequestDTO {
     @NotNull
     private LocalDate date;
 
+    @Size(max = 2000, message = "Notes must be at most 2000 characters")
     private String notes;
 
     private WallIncline wallIncline;
