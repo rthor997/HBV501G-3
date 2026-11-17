@@ -2,6 +2,7 @@
 package org.example.klifurapp.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -165,6 +166,18 @@ public class GlobalExceptionHandler {
         return buildError(
                 HttpStatus.FORBIDDEN,
                 "Access denied",
+                request
+        );
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ProblemDetail> handleCustomBadRequest(
+            BadRequestException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
                 request
         );
     }

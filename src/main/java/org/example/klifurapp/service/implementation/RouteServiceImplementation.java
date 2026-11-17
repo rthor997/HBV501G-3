@@ -65,7 +65,6 @@ public class RouteServiceImplementation implements RouteService {
         );
     }
 
-    // UC12 - View Route Details
     @Override
     @Transactional(readOnly = true)
     public RouteDetailsResponseDTO getRouteDetails(Long routeId, Long currentUserId) {
@@ -111,7 +110,6 @@ public class RouteServiceImplementation implements RouteService {
         );
     }
 
-    // Admin - Update Route
     @Override
     public Route updateRouteAsAdmin(
             Long routeId,
