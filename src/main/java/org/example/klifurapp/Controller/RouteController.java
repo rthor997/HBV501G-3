@@ -53,7 +53,7 @@ public class RouteController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Route> updateRouteAsAdmin(
             @PathVariable Long routeId,
-            @RequestBody AdminUpdateRouteDTO dto) {
+            @Valid @RequestBody AdminUpdateRouteDTO dto) {
 
         Route updatedRoute =
                 routeService.updateRouteAsAdmin(routeId, dto);

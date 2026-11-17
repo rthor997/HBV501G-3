@@ -214,5 +214,39 @@ class ClimbControllerSecurityTest {
         verify(climbService, never()).updateClimb(anyLong(), anyLong(), any());
     }
 
+    @Test
+    void updatingClimbWithBlankGradeReturns400() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(patch("/api/climbs/42")
+                        .header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "difficultyGrade": ""
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.difficultyGrade").exists());
+
+        verifyNoInteractions(climbService);
+    }
+
+    @Test
+    void partialClimbUpdateWithOnlyNotesIsValid() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(patch("/api/climbs/42")
+                        .header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "notes": "Great climbing session"
+                }
+                """))
+                .andExpect(status().isOk());
+
+        verify(climbService).updateClimb(eq(42L), eq(11L), any());
+    }
 
 }

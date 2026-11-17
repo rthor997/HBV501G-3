@@ -46,7 +46,7 @@ public class ClimbController {
     @PatchMapping("/{climbId}")
     public ResponseEntity<ClimbResponseDTO> updateClimb(
             @PathVariable Long climbId,
-            @RequestBody UpdateClimbRequestDTO dto,
+            @Valid @RequestBody UpdateClimbRequestDTO dto,
             Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
 
@@ -59,7 +59,7 @@ public class ClimbController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Climb> updateClimbAsAdmin(
             @PathVariable Long climbId,
-            @RequestBody AdminUpdateClimbDTO dto) {
+            @Valid @RequestBody AdminUpdateClimbDTO dto) {
         Climb updatedClimb =
                 climbService.updateClimbAsAdmin(climbId, dto);
         return ResponseEntity.ok(updatedClimb);
