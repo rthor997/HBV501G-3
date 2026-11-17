@@ -62,7 +62,7 @@ public class UserController {
     }
     // public endpoint
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO dto) {
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
         LoginResponseDTO responseDto = authService.login(dto);
         return ResponseEntity.ok(responseDto);
     }
@@ -87,7 +87,7 @@ public class UserController {
 
     @PutMapping("/me")
     public ResponseEntity<User> updateUser(
-            @RequestBody UpdateUserRequestDTO dto,
+            @Valid @RequestBody UpdateUserRequestDTO dto,
             Authentication authentication) {
 
         Long userId = (Long) authentication.getPrincipal();
@@ -101,7 +101,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> updateUserAsAdmin(
             @PathVariable Long userId,
-            @RequestBody AdminUpdateUserDTO dto) {
+            @Valid @RequestBody AdminUpdateUserDTO dto) {
         User updatedUser = userService.updateUserAsAdmin(userId, dto);
         return ResponseEntity.ok(updatedUser);
     }

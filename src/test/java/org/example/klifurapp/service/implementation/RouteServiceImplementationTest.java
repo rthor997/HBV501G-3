@@ -1,25 +1,20 @@
 package org.example.klifurapp.service.implementation;
 
 import org.example.klifurapp.DTO.requests.AdminUpdateRouteDTO;
+import org.example.klifurapp.DTO.requests.CreateRouteRequestDTO;
 import org.example.klifurapp.DTO.responses.RouteDetailsResponseDTO;
-import org.example.klifurapp.entity.Climb;
-import org.example.klifurapp.entity.ClimbingStyle;
-import org.example.klifurapp.entity.GradingSystem;
-import org.example.klifurapp.entity.Route;
-import org.example.klifurapp.entity.User;
+import org.example.klifurapp.DTO.responses.RouteResponseDTO;
+import org.example.klifurapp.entity.*;
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,20 +30,133 @@ class RouteServiceImplementationTest {
     @Mock UserRepository userRepository;
     @InjectMocks RouteServiceImplementation service;
 
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
+    @Test
+    void createRouteSavesAndReturnsResponse() {
+
+        CreateRouteRequestDTO dto =
+                new CreateRouteRequestDTO(
+                        "Moon Board",
+                        GradingSystem.V_SCALE,
+                        "V5",
+                        "Klifurhúsið",
+                        ClimbingStyle.BOULDERING,
+                        WallIncline.OVERHANG,
+                        true,
+                        "Technical"
+                );
+
+        when(routeRepository.save(any(Route.class)))
+                .thenAnswer(invocation -> {
+                    Route route = invocation.getArgument(0);
+
+                    ReflectionTestUtils.setField(
+                            route,
+                            "id",
+                            5L
+                    );
+
+                    return route;
+                });
+
+        RouteResponseDTO result =
+                service.createRoute(dto);
+
+        assertEquals(5L, result.id());
+        assertEquals("Moon Board", result.name());
+        assertEquals("V5", result.difficultyGrade());
+
+        verify(routeRepository).save(any(Route.class));
     }
 
     @Test
+    void createRouteSetsActiveTrueAndMapsAllFields() {
+
+        CreateRouteRequestDTO dto =
+                new CreateRouteRequestDTO(
+                        "Moon Board",
+                        GradingSystem.V_SCALE,
+                        "V5",
+                        "Klifurhúsið",
+                        ClimbingStyle.BOULDERING,
+                        WallIncline.OVERHANG,
+                        true,
+                        "Technical"
+                );
+
+        when(routeRepository.save(any(Route.class)))
+                .thenAnswer(invocation -> {
+                    Route route = invocation.getArgument(0);
+
+                    ReflectionTestUtils.setField(
+                            route,
+                            "id",
+                            5L
+                    );
+
+                    return route;
+                });
+
+        RouteResponseDTO result =
+                service.createRoute(dto);
+
+        assertEquals(5L, result.id());
+        assertEquals("Moon Board", result.name());
+        assertEquals("V5", result.difficultyGrade());
+        assertEquals("V_SCALE", result.gradingSystem());
+        assertEquals("BOULDERING", result.climbingStyle());
+        assertEquals("OVERHANG", result.wallIncline());
+        assertEquals("Technical", result.characteristics());
+        assertTrue(result.indoor());
+        assertEquals("Klifurhúsið", result.location());
+
+        verify(routeRepository).save(argThat(route ->
+                route.isActive()
+                        && route.getName().equals("Moon Board")
+                        && route.getDifficultyGrade().equals("V5")
+        ));
+    }
+
+    @Test
+    void createRouteAllowsNullWallIncline() {
+
+        CreateRouteRequestDTO dto =
+                new CreateRouteRequestDTO(
+                        "Vertical Route",
+                        GradingSystem.V_SCALE,
+                        "V2",
+                        "Gym",
+                        ClimbingStyle.BOULDERING,
+                        null,
+                        true,
+                        null
+                );
+
+        when(routeRepository.save(any(Route.class)))
+                .thenAnswer(invocation -> {
+                    Route route = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(route, "id", 7L);
+                    return route;
+                });
+
+        RouteResponseDTO result =
+                service.createRoute(dto);
+
+        assertNull(result.wallIncline());
+        assertNull(result.characteristics());
+    }
+
+
+
+
+
+    @Test
     void getRouteDetailsReturnsRouteWithoutFriends() {
-        authenticateAs(10L);
         Route route = route();
         User currentUser = user(10L, "anna");
         when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route));
         when(userRepository.findById(10L)).thenReturn(Optional.of(currentUser));
 
-        RouteDetailsResponseDTO result = service.getRouteDetails(5L);
+        RouteDetailsResponseDTO result = service.getRouteDetails(5L, 10L);
 
         assertEquals("Blue Wall", result.name());
         assertEquals("V3", result.difficultyGrade());
@@ -59,7 +167,6 @@ class RouteServiceImplementationTest {
 
     @Test
     void getRouteDetailsIncludesFriendWhoCompletedIt() {
-        authenticateAs(10L);
         Route route = route();
         User currentUser = user(10L, "anna");
         User friend = user(20L, "bob");
@@ -72,7 +179,7 @@ class RouteServiceImplementationTest {
         when(climbRepository.findByRouteIdAndUserIdIn(5L, List.of(20L)))
                 .thenReturn(List.of(completed));
 
-        RouteDetailsResponseDTO result = service.getRouteDetails(5L);
+        RouteDetailsResponseDTO result = service.getRouteDetails(5L, 10L);
 
         assertEquals(1, result.friendsWhoCompleted().size());
         assertEquals("bob", result.friendsWhoCompleted().get(0).username());
@@ -83,22 +190,21 @@ class RouteServiceImplementationTest {
     void getMissingRouteReturns404() {
         when(routeRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class, () -> service.getRouteDetails(99L));
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class, () -> service.getRouteDetails(99L, 10L));
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Route not found", exception.getMessage());
     }
 
     @Test
     void getRouteDetailsWithMissingCurrentUserReturns404() {
-        authenticateAs(10L);
         when(routeRepository.findByIdAndActiveTrue(5L)).thenReturn(Optional.of(route()));
         when(userRepository.findById(10L)).thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class, () -> service.getRouteDetails(5L));
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class, () -> service.getRouteDetails(5L, 10L));
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("User not found", exception.getMessage());
     }
 
     @Test
@@ -123,20 +229,16 @@ class RouteServiceImplementationTest {
     void adminUpdateMissingRouteReturns404AndDoesNotSave() {
         when(routeRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> service.updateRouteAsAdmin(99L,
                         new AdminUpdateRouteDTO("New", null, null, null,
                                 null, null, null, null)));
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Route not found", exception.getMessage());
         verify(routeRepository, never()).save(any(Route.class));
     }
 
-    private static void authenticateAs(Long userId) {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userId, null, List.of()));
-    }
 
     private static User user(Long id, String username) {
         User user = new User();
@@ -174,12 +276,12 @@ class RouteServiceImplementationTest {
         when(routeRepository.findByIdAndActiveTrue(99L))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> service.deleteRouteAsAdmin(99L)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Route not found", exception.getMessage());
 
         verify(routeRepository, never()).save(any(Route.class));
     }
@@ -189,12 +291,12 @@ class RouteServiceImplementationTest {
         when(routeRepository.findByIdAndActiveTrue(5L))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> service.deleteRouteAsAdmin(5L)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Route not found", exception.getMessage());
 
         verify(routeRepository, never()).save(any());
     }

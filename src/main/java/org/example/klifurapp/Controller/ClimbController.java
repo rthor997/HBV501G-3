@@ -3,22 +3,23 @@ package org.example.klifurapp.Controller;
 import jakarta.validation.Valid;
 import org.example.klifurapp.DTO.requests.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.DTO.responses.ClimbSummaryResponseDTO;
+import org.example.klifurapp.DTO.responses.PageResponseDTO;
 import org.example.klifurapp.entity.Climb;
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.service.ClimbService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 
@@ -26,6 +27,7 @@ import java.time.LocalDate;
 @RequestMapping("/api/climbs")
 public class ClimbController {
 
+    private static final int MAX_PAGE_SIZE = 50;
     private final ClimbService climbService;
 
     public ClimbController(ClimbService climbService) {
@@ -41,42 +43,38 @@ public class ClimbController {
         return ResponseEntity.status(HttpStatus.CREATED).body(climb);
     }
 
+    @PatchMapping("/{climbId}")
+    public ResponseEntity<ClimbResponseDTO> updateClimb(
+            @PathVariable Long climbId,
+            @Valid @RequestBody UpdateClimbRequestDTO dto,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        ClimbResponseDTO updatedClimb = climbService.updateClimb(climbId, userId, dto);
+
+        return ResponseEntity.ok(updatedClimb);
+    }
+
     @PutMapping("/admin/{climbId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Climb> updateClimbAsAdmin(
             @PathVariable Long climbId,
-            @RequestBody AdminUpdateClimbDTO dto) {
+            @Valid @RequestBody AdminUpdateClimbDTO dto) {
         Climb updatedClimb =
                 climbService.updateClimbAsAdmin(climbId, dto);
         return ResponseEntity.ok(updatedClimb);
     }
-
     @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<ClimbResponseDTO>> getClimbsByUser(
+    public ResponseEntity<PageResponseDTO<ClimbResponseDTO>> getClimbsByUser(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "20") int size) {
 
-        if (page < 0 || size < 1 || size > 100) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid pagination parameters"
-            );
-        }
+        Pageable pageable = createPageable(page, size);
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(
-                        Sort.Order.desc("date"),
-                        Sort.Order.desc("id")
-                )
-        );
-
-        Page<ClimbResponseDTO> climbs =
+        Page<ClimbResponseDTO> result =
                 climbService.getClimbsByUserId(userId, pageable);
-
-        return ResponseEntity.ok(climbs);
+        return ResponseEntity.ok(PageResponseDTO.from(result));
     }
 
 
@@ -86,7 +84,7 @@ public class ClimbController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ClimbSummaryResponseDTO>> getClimbingHistory(
+    public ResponseEntity<PageResponseDTO<ClimbSummaryResponseDTO>> getClimbingHistory(
             @RequestParam(required = false) String grade,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -94,25 +92,21 @@ public class ClimbController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate endDate,
-            @PageableDefault(
-                    size = 20,
-                    sort = "date",
-                    direction = Sort.Direction.DESC
-            )
-            Pageable pageable,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
 
         Long userId = (Long) authentication.getPrincipal();
+        Pageable pageable = createPageable(page, size);
 
-        return ResponseEntity.ok(
+        Page<ClimbSummaryResponseDTO> result =
                 climbService.getClimbingHistory(
                         userId,
                         grade,
                         startDate,
                         endDate,
-                        pageable
-                )
-        );
+                        pageable);
+        return ResponseEntity.ok(PageResponseDTO.from(result));
     }
 
     @DeleteMapping("/{id}")
@@ -125,5 +119,16 @@ public class ClimbController {
         climbService.deleteClimb(id, userId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    private Pageable createPageable(int page, int size) {
+        if (page < 0) {
+            throw new BadRequestException("Page must be zero or greater");
+        }
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new BadRequestException("Size must be between 1 and " + MAX_PAGE_SIZE);
+        }
+        return PageRequest.of(page,size,Sort.by(
+                Sort.Order.desc("date"),Sort.Order.desc("id")));
     }
 }

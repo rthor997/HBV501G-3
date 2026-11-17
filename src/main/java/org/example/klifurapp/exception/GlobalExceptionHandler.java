@@ -2,6 +2,7 @@
 package org.example.klifurapp.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import java.net.URI;
 
@@ -65,15 +68,29 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request
     ) {
-        String message = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .findFirst()
-                .map(error -> error.getField() + ": "
-                        + error.getDefaultMessage())
-                .orElse("Invalid request");
+        Map<String, String> errors = new LinkedHashMap<>();
 
-        return buildError(HttpStatus.BAD_REQUEST, message, request);
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.putIfAbsent(
+                        error.getField(),
+                        error.getDefaultMessage() != null
+                                ? error.getDefaultMessage()
+                                : "Invalid value"
+                )
+        );
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Request validation failed"
+        );
+
+        problem.setTitle("Bad Request");
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("errors", errors);
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(problem);
     }
 
     @ExceptionHandler({
@@ -164,6 +181,18 @@ public class GlobalExceptionHandler {
         return buildError(
                 HttpStatus.FORBIDDEN,
                 "Access denied",
+                request
+        );
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ProblemDetail> handleCustomBadRequest(
+            BadRequestException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
                 request
         );
     }

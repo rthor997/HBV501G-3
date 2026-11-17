@@ -6,6 +6,9 @@ import org.example.klifurapp.entity.ClimbingStyle;
 import org.example.klifurapp.entity.GradingSystem;
 import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
+import org.example.klifurapp.exception.BadRequestException;
+import org.example.klifurapp.exception.ForbiddenException;
+import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
@@ -66,16 +69,16 @@ class ClimbIntegrationTest {
     @Test void invalidGradeIsRejectedWithoutSaving() {
         User owner = createUser("owner2");
         long before = climbRepository.count();
-        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+        BadRequestException error = assertThrows(BadRequestException.class,
             () -> climbService.createClimb(request("INVALID", LocalDate.now()), owner.getId()));
-        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertEquals("Invalid difficulty grade for V_SCALE",error.getMessage());
         assertEquals(before, climbRepository.count());
     }
 
     @Test void missingUserCannotCreateClimb() {
-        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+        ResourceNotFoundException error = assertThrows(ResourceNotFoundException.class,
             () -> climbService.createClimb(request("V2", LocalDate.now()), -999L));
-        assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
+        assertEquals("User not found", error.getMessage());
     }
 
     @Test void ownerCanDeleteClimbFromDatabase() {
@@ -89,9 +92,9 @@ class ClimbIntegrationTest {
         User owner = createUser("owner4");
         User stranger = createUser("stranger4");
         Climb climb = climbService.createClimb(request("V4", LocalDate.now()), owner.getId());
-        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+        ForbiddenException error = assertThrows(ForbiddenException.class,
             () -> climbService.deleteClimb(climb.getId(), stranger.getId()));
-        assertEquals(HttpStatus.FORBIDDEN, error.getStatusCode());
+        assertEquals("You do not own this climb",error.getMessage());
         assertTrue(climbRepository.existsById(climb.getId()));
     }
 
