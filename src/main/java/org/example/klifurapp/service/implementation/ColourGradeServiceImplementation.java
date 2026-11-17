@@ -1,5 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.DTO.requests.CreateColourGradePresetRequestDTO;
 import org.example.klifurapp.DTO.requests.CreateColourGradeRequestDTO;
 import org.example.klifurapp.DTO.responses.ColourGradePresetResponseDTO;
@@ -16,10 +17,8 @@ import org.example.klifurapp.repository.ColourGradeRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ColourGradeService;
 import org.example.klifurapp.service.GradeValidator;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -96,10 +95,7 @@ public class ColourGradeServiceImplementation implements ColourGradeService {
         }
 
         if (dto.gradingSystem() == GradingSystem.COLOUR) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Colour grade ranges must use V_SCALE or FONT"
-            );
+            throw new BadRequestException("Colour grade ranges must use V_SCALE or FONT");
         }
 
         String minGrade = dto.minGrade().trim();
@@ -109,10 +105,7 @@ public class ColourGradeServiceImplementation implements ColourGradeService {
         GradeValidator.validate(dto.gradingSystem(), maxGrade);
 
         if (GradeValidator.compare(dto.gradingSystem(), minGrade, maxGrade) > 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Minimum grade cannot be harder than maximum grade"
-            );
+            throw new BadRequestException("Minimum grade cannot be harder than maximum grade");
         }
 
         String colour = dto.colour().trim();

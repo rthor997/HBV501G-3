@@ -1,5 +1,6 @@
 package org.example.klifurapp.Controller;
 
+import org.example.klifurapp.DTO.responses.RouteResponseDTO;
 import org.example.klifurapp.config.SecurityConfig;
 import org.example.klifurapp.entity.Role;
 import org.example.klifurapp.entity.User;
@@ -29,6 +30,139 @@ class RouteControllerSecurityTest {
     @MockitoBean RouteService routeService;
     @MockitoBean JwtService jwtService;
     @MockitoBean UserRepository userRepository;
+
+    @Test
+    void adminCanCreateRoute() throws Exception {
+        authenticate("admin-token", 22L, Role.ADMIN);
+
+        RouteResponseDTO response =
+                new RouteResponseDTO(
+                        3L,
+                        "Moon Board",
+                        "V5",
+                        "V_SCALE",
+                        "BOULDERING",
+                        "OVERHANG",
+                        "Technical",
+                        true,
+                        "Klifurhúsið"
+                );
+
+        when(routeService.createRoute(any()))
+                .thenReturn(response);
+
+        mvc.perform(post("/api/routes").header(
+                "Authorization", "Bearer admin-token")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                    {
+                      "name": "Moon Board",
+                      "gradingSystem": "V_SCALE",
+                      "difficultyGrade": "V5",
+                      "location": "Klifurhúsið",
+                      "climbingStyle": "BOULDERING",
+                      "wallIncline": "OVERHANG",
+                      "indoor": true,
+                      "characteristics": "Technical"
+                    }
+                    """)
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(3))
+                .andExpect(jsonPath("$.name").value("Moon Board"));
+
+        verify(routeService).createRoute(any());
+    }
+
+    @Test
+    void ordinaryUserCannotCreateRoute() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(post("/api/routes").header(
+                "Authorization", "Bearer user-token")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                    {
+                      "name": "Moon Board",
+                      "gradingSystem": "V_SCALE",
+                      "difficultyGrade": "V5",
+                      "location": "Gym",
+                      "climbingStyle": "BOULDERING",
+                      "indoor": true
+                    }
+                    """)
+                )
+                .andExpect(status().isForbidden());
+
+        verify(routeService, never())
+                .createRoute(any());
+    }
+
+    @Test
+    void anonymousUserCannotCreateRoute() throws Exception {
+
+        mvc.perform(post("/api/routes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                      "name": "Moon Board",
+                      "gradingSystem": "V_SCALE",
+                      "difficultyGrade": "V5",
+                      "location": "Gym",
+                      "climbingStyle": "BOULDERING",
+                      "indoor": true
+                    }
+                    """)
+                )
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(routeService);
+    }
+
+
+    @Test
+    void createRouteWithMissingNameReturns400() throws Exception {
+        authenticate("admin-token", 22L, Role.ADMIN);
+
+        mvc.perform(post("/api/routes").header(
+                "Authorization", "Bearer admin-token")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                    {
+                      "gradingSystem": "V_SCALE",
+                      "difficultyGrade": "V5",
+                      "location": "Gym",
+                      "climbingStyle": "BOULDERING",
+                      "indoor": true
+                    }
+                    """)
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(routeService, never())
+                .createRoute(any());
+    }
+
+    @Test
+    void createRouteWithInvalidClimbingStyleReturns400() throws Exception {
+        authenticate("admin-token", 22L, Role.ADMIN);
+
+        mvc.perform(post("/api/routes").header(
+                "Authorization", "Bearer admin-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                      "name": "Moon Board",
+                      "gradingSystem": "V_SCALE",
+                      "difficultyGrade": "V5",
+                      "location": "Gym",
+                      "climbingStyle": "INVALID_STYLE",
+                      "indoor": true
+                    }
+                    """)
+                )
+                .andExpect(status().isBadRequest());
+    }
 
     @Test void authenticatedUserCanRequestRouteDetails() throws Exception {
         authenticate("user-token", 11L, Role.USER);

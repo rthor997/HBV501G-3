@@ -166,10 +166,10 @@ class WorkoutServiceImplementationTest {
     void getWorkoutsForMissingUserReturns404() {
         when(userRepository.existsById(99L)).thenReturn(false);
 
-        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+        ResourceNotFoundException error = assertThrows(ResourceNotFoundException.class,
                 () -> service.getWorkoutsByUserId(99L, PageRequest.of(0, 10)));
 
-        assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
+        assertEquals("User not found", error.getMessage());
         verify(workoutRepository, never()).findByUserId(anyLong(), any(Pageable.class));
     }
 

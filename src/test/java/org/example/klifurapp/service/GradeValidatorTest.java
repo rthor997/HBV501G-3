@@ -1,9 +1,8 @@
 package org.example.klifurapp.service;
 
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.entity.GradingSystem;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,9 +31,8 @@ class GradeValidatorTest {
 
     @Test
     void validateThrowsBadRequestForInvalidGrade() {
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> GradeValidator.validate(GradingSystem.FONT, "6D"));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test

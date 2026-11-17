@@ -1,8 +1,7 @@
 package org.example.klifurapp.service;
 
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.entity.GradingSystem;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 public final class GradeValidator {
 
@@ -25,16 +24,10 @@ public final class GradeValidator {
 
     public static void validate(GradingSystem system, String grade) {
         if (system == GradingSystem.COLOUR) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Colour grades must be set with a colourGradeId"
-            );
+            throw new BadRequestException("Colour grades must be set with a colourGradeId");
         }
         if (!isValid(system, grade)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid difficulty grade for " + system
-            );
+            throw new BadRequestException("Invalid difficulty grade for " + system);
         }
     }
 

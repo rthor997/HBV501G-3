@@ -1,5 +1,6 @@
 package org.example.klifurapp.Controller;
 
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.DTO.responses.ColourGradePresetResponseDTO;
 import org.example.klifurapp.DTO.responses.ColourGradeResponseDTO;
 import org.example.klifurapp.config.SecurityConfig;
@@ -18,13 +19,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -111,7 +110,7 @@ class ColourGradePresetControllerSecurityTest {
     void invalidGradeFromServiceReturnsBadRequest() throws Exception {
         authenticate();
         when(colourGradeService.createColourGrade(eq(3L), any(), eq(11L))).thenThrow(
-                new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid difficulty grade for V_SCALE"));
+                new BadRequestException("Invalid difficulty grade for V_SCALE"));
 
         mvc.perform(post("/api/colour-presets/3/colour-grades")
                         .header("Authorization", "Bearer user-token")

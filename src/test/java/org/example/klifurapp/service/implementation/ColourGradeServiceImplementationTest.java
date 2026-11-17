@@ -1,5 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.DTO.requests.CreateColourGradePresetRequestDTO;
 import org.example.klifurapp.DTO.requests.CreateColourGradeRequestDTO;
 import org.example.klifurapp.DTO.responses.ColourGradePresetResponseDTO;
@@ -20,9 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -135,10 +134,8 @@ class ColourGradeServiceImplementationTest {
     void invalidGradeThrowsBadRequest() {
         when(presetRepository.findById(3L)).thenReturn(Optional.of(ownPreset(3L, user(10L))));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> service.createColourGrade(3L, grade("Blue", GradingSystem.V_SCALE, "6A", "V4"), 10L));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         verify(colourGradeRepository, never()).save(any());
     }
 
@@ -146,20 +143,16 @@ class ColourGradeServiceImplementationTest {
     void reversedRangeThrowsBadRequest() {
         when(presetRepository.findById(3L)).thenReturn(Optional.of(ownPreset(3L, user(10L))));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> service.createColourGrade(3L, grade("Blue", GradingSystem.FONT, "7A", "6C"), 10L));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
     void colourGradingSystemCannotBeUsedForRange() {
         when(presetRepository.findById(3L)).thenReturn(Optional.of(ownPreset(3L, user(10L))));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> service.createColourGrade(3L, grade("Blue", GradingSystem.COLOUR, "V1", "V2"), 10L));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.example.klifurapp.integration;
 
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.DTO.requests.CreateColourGradePresetRequestDTO;
 import org.example.klifurapp.DTO.requests.CreateColourGradeRequestDTO;
@@ -25,10 +26,8 @@ import org.example.klifurapp.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
@@ -132,11 +131,9 @@ class ColourGradeIntegrationTest {
                 new CreateColourGradePresetRequestDTO("Gym D"), owner.getId());
         long before = colourGradeRepository.count();
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> colourGradeService.createColourGrade(preset.id(),
                         new CreateColourGradeRequestDTO("Black", GradingSystem.V_SCALE, "V8", "V5"), owner.getId()));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals(before, colourGradeRepository.count());
     }
 
@@ -180,9 +177,8 @@ class ColourGradeIntegrationTest {
         dto.setGradingSystem(GradingSystem.V_SCALE);
         dto.setDifficultyGrade("V3");
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        assertThrows(BadRequestException.class,
                 () -> climbService.createClimb(dto, user.getId()));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
     @Test
