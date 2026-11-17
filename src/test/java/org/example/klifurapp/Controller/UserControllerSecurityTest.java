@@ -183,6 +183,57 @@ class UserControllerSecurityTest {
                 .andExpect(status().isNotFound());
     }
 
+
+    @Test
+    void registrationWithInvalidEmailReturns400() throws Exception {
+        mvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "username": "anna",
+                  "email": "not-an-email",
+                  "password": "secret123"
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").exists());
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void loginWithMissingEmailReturns400() throws Exception {
+        mvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "password": "secret123"
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").exists());
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void updatingUsernameToBlankReturns400() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(put("/api/users/me")
+                        .header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "username": "   "
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.username").exists());
+
+        verifyNoInteractions(userService);
+    }
+
     private void authenticate(String token, Long id, Role role) {
         when(jwtService.isTokenValid(token)).thenReturn(true);
         when(jwtService.extractUserId(token)).thenReturn(id);

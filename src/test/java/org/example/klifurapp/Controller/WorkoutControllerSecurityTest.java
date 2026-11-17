@@ -100,6 +100,69 @@ class WorkoutControllerSecurityTest {
         verifyNoInteractions(workoutService);
     }
 
+    @Test
+    void negativeSetsReturns400() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(post("/api/workouts")
+                        .header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "exerciseName": "Bench Press",
+                  "sets": -1
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.sets").value(
+                        "Sets must be at least 1"));
+
+        verifyNoInteractions(workoutService);
+    }
+
+    @Test
+    void negativeWeightReturns400() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(post("/api/workouts")
+                        .header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "exerciseName": "Bench Press",
+                  "weight": -10.0
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.weight").value(
+                        "Weight cannot be negative"));
+
+        verifyNoInteractions(workoutService);
+    }
+
+    @Test
+    void multipleInvalidWorkoutFieldsReturnAllErrors() throws Exception {
+        authenticate("user-token", 11L, Role.USER);
+
+        mvc.perform(post("/api/workouts")
+                        .header("Authorization", "Bearer user-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "exerciseName": "Bench Press",
+                  "sets": -2,
+                  "repetitions": 0,
+                  "weight": -10.0
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.sets").exists())
+                .andExpect(jsonPath("$.errors.repetitions").exists())
+                .andExpect(jsonPath("$.errors.weight").exists());
+
+        verifyNoInteractions(workoutService);
+    }
+
     private void authenticate(String token, Long id, Role role) {
         when(jwtService.isTokenValid(token)).thenReturn(true);
         when(jwtService.extractUserId(token)).thenReturn(id);
