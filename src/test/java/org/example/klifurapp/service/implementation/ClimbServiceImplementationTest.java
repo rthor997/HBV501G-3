@@ -4,6 +4,7 @@ import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
 import org.example.klifurapp.entity.*;
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.exception.ForbiddenException;
 import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.repository.ClimbRepository;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.web.server.ResponseStatusException;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,7 +21,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import org.example.klifurapp.repository.RouteRepository;
 
 class ClimbServiceImplementationTest {
     ClimbRepository climbs = mock(ClimbRepository.class);
@@ -53,7 +52,11 @@ class ClimbServiceImplementationTest {
         when(users.findById(10L)).thenReturn(Optional.of(user(10L)));
         CreateClimbRequestDTO dto = new CreateClimbRequestDTO();
         dto.setGradingSystem(GradingSystem.V_SCALE); dto.setDifficultyGrade("invalid");
-        assertEquals(400, assertThrows(ResponseStatusException.class, () -> service.createClimb(dto,10L)).getStatusCode().value());
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> service.createClimb(dto, 10L)
+        );
+        assertEquals("Invalid difficulty grade for V_SCALE", exception.getMessage());
         verify(climbs, never()).save(any());
     }
 
@@ -67,12 +70,20 @@ class ClimbServiceImplementationTest {
     @Test void otherUserCannotDeleteClimb() throws Exception {
         Climb climb = new Climb(); climb.setUser(user(10L));
         when(climbs.findById(5L)).thenReturn(Optional.of(climb));
-        assertEquals(403, assertThrows(ResponseStatusException.class, () -> service.deleteClimb(5L,20L)).getStatusCode().value());
+        ForbiddenException exception = assertThrows(
+                ForbiddenException.class,
+                () -> service.deleteClimb(5L, 20L)
+        );
+        assertEquals("You do not own this climb",exception.getMessage());
         verify(climbs, never()).delete(any());
     }
 
     @Test void deletingMissingClimbReturns404() {
-        assertEquals(404, assertThrows(ResponseStatusException.class, () -> service.deleteClimb(999L,10L)).getStatusCode().value());
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.deleteClimb(999L,10L)
+        );
+        assertEquals("Climb not found", exception.getMessage() );
         verify(climbs, never()).delete(any());
     }
 
@@ -187,15 +198,11 @@ class ClimbServiceImplementationTest {
         UpdateClimbRequestDTO dto =
                 new UpdateClimbRequestDTO(null, "invalid",
                         null, null, null, null);
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
                 () -> service.updateClimb(5L, 10L, dto)
         );
-        assertEquals(400, exception.getStatusCode().value());
+        assertEquals("Invalid difficulty grade for V_SCALE", exception.getMessage());
         verify(climbs, never()).save(any());
     }
-
-
-
-
 }
