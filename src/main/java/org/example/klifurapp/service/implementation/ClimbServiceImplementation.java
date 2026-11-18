@@ -13,6 +13,8 @@ import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
+import org.example.klifurapp.service.ColourGradeService;
+import org.example.klifurapp.service.GradeValidator;
 import org.example.klifurapp.strategy.ClimbSortingStrategy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,16 +36,19 @@ public class ClimbServiceImplementation implements ClimbService {
     private final ClimbRepository climbRepository;
     private final UserRepository userRepository;
     private final RouteRepository routeRepository;
+    private final ColourGradeService colourGradeService;
     private final Map<String, ClimbSortingStrategy> sortingStrategies;
 
     public ClimbServiceImplementation(
             ClimbRepository climbRepository,
             UserRepository userRepository,
             RouteRepository routeRepository,
+            ColourGradeService colourGradeService,
             List<ClimbSortingStrategy> strategies) {
         this.climbRepository = climbRepository;
         this.userRepository = userRepository;
         this.routeRepository = routeRepository;
+        this.colourGradeService = colourGradeService;
         this.sortingStrategies = strategies.stream()
                 .collect(Collectors.toMap(
                         ClimbSortingStrategy::getName,
@@ -52,17 +57,32 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
+    @Transactional
     public Climb createClimb(CreateClimbRequestDTO dto, Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found")
                 );
-        validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
         Climb climb = new Climb();
         climb.setUser(user);
         climb.setGradingSystem(dto.getGradingSystem());
-        climb.setDifficultyGrade(dto.getDifficultyGrade());
+
+        if (dto.getGradingSystem() == GradingSystem.COLOUR) {
+            if (dto.getColourGradeId() == null) {
+                throw new BadRequestException("colourGradeId is required when gradingSystem is COLOUR");
+            }
+            ColourGrade colourGrade = colourGradeService.useColourGrade(dto.getColourGradeId(), user);
+            climb.setColourGrade(colourGrade);
+            climb.setDifficultyGrade(colourGrade.getColour());
+        } else {
+            if (dto.getColourGradeId() != null) {
+                throw new BadRequestException("colourGradeId can only be used when gradingSystem is COLOUR");
+            }
+            validateGrade(dto.getGradingSystem(), dto.getDifficultyGrade());
+            climb.setDifficultyGrade(dto.getDifficultyGrade());
+        }
+
         climb.setClimbingStyle(dto.getClimbingStyle());
         climb.setDate(dto.getDate());
         climb.setNotes(dto.getNotes());
@@ -80,14 +100,7 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     private void validateGrade(GradingSystem system, String grade) {
-        boolean valid = switch (system) {
-            case V_SCALE -> grade.matches("V(0|[1-9][0-9]*)\\+?");
-            case FONT -> grade.matches("[3-9][ABC]\\+?");
-        };
-
-        if (!valid) {
-            throw new BadRequestException("Invalid difficulty grade for " + system);
-        }
+        GradeValidator.validate(system, grade);
     }
 
     @Override
@@ -113,6 +126,7 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
+    @Transactional
     public ClimbResponseDTO updateClimb(
             Long climbId,
             Long userId,
@@ -129,6 +143,8 @@ public class ClimbServiceImplementation implements ClimbService {
                 climb,
                 dto.gradingSystem(),
                 dto.difficultyGrade(),
+                dto.colourGradeId(),
+                true,
                 dto.climbingStyle(),
                 dto.date(),
                 dto.notes(),
@@ -149,6 +165,7 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
     @Override
+    @Transactional
     public Climb updateClimbAsAdmin(Long id, AdminUpdateClimbDTO dto) {
         Climb climb = climbRepository.findById(id)
                 .orElseThrow(() ->
@@ -158,6 +175,8 @@ public class ClimbServiceImplementation implements ClimbService {
                 climb,
                 dto.gradingSystem(),
                 dto.difficultyGrade(),
+                dto.colourGradeId(),
+                false,
                 dto.climbingStyle(),
                 dto.date(),
                 dto.notes(),
@@ -261,6 +280,8 @@ public class ClimbServiceImplementation implements ClimbService {
             Climb climb,
             GradingSystem gradingSystem,
             String difficultyGrade,
+            Long colourGradeId,
+            boolean rememberPreset,
             ClimbingStyle climbingStyle,
             LocalDate date,
             String notes,
@@ -270,22 +291,13 @@ public class ClimbServiceImplementation implements ClimbService {
                         ? gradingSystem
                         : climb.getGradingSystem();
 
-        String resultingGrade =
-                difficultyGrade != null
-                        ? difficultyGrade
-                        : climb.getDifficultyGrade();
-
-        if (gradingSystem != null || difficultyGrade != null) {
-            validateGrade(resultingSystem, resultingGrade);
+        if (resultingSystem == GradingSystem.COLOUR) {
+            applyColourGrade(climb, difficultyGrade, colourGradeId, rememberPreset);
+        } else {
+            applyScaleGrade(climb, resultingSystem, gradingSystem, difficultyGrade, colourGradeId);
         }
 
-        if (gradingSystem != null) {
-            climb.setGradingSystem(gradingSystem);
-        }
-
-        if (difficultyGrade != null) {
-            climb.setDifficultyGrade(difficultyGrade);
-        }
+        climb.setGradingSystem(resultingSystem);
 
         if (climbingStyle != null) {
             climb.setClimbingStyle(climbingStyle);
@@ -301,6 +313,54 @@ public class ClimbServiceImplementation implements ClimbService {
 
         if (wallIncline != null) {
             climb.setWallIncline(wallIncline);
+        }
+    }
+
+    private void applyColourGrade(
+            Climb climb,
+            String difficultyGrade,
+            Long colourGradeId,
+            boolean rememberPreset) {
+        if (difficultyGrade != null) {
+            throw new BadRequestException("Use colourGradeId instead of difficultyGrade when gradingSystem is COLOUR");
+        }
+
+        if (colourGradeId != null) {
+            ColourGrade colourGrade = rememberPreset
+                    ? colourGradeService.useColourGrade(colourGradeId, climb.getUser())
+                    : colourGradeService.getUsableColourGrade(colourGradeId, climb.getUser());
+            climb.setColourGrade(colourGrade);
+            climb.setDifficultyGrade(colourGrade.getColour());
+        } else if (climb.getColourGrade() == null) {
+            throw new BadRequestException("colourGradeId is required when gradingSystem is COLOUR");
+        }
+    }
+
+    private void applyScaleGrade(
+            Climb climb,
+            GradingSystem resultingSystem,
+            GradingSystem gradingSystem,
+            String difficultyGrade,
+            Long colourGradeId) {
+        if (colourGradeId != null) {
+            throw new BadRequestException("colourGradeId can only be used when gradingSystem is COLOUR");
+        }
+
+        if (climb.getGradingSystem() == GradingSystem.COLOUR && difficultyGrade == null) {
+            throw new BadRequestException("difficultyGrade is required when changing from COLOUR to " + resultingSystem);
+        }
+
+        if (gradingSystem != null || difficultyGrade != null) {
+            String resultingGrade = difficultyGrade != null
+                    ? difficultyGrade
+                    : climb.getDifficultyGrade();
+            validateGrade(resultingSystem, resultingGrade);
+        }
+
+        climb.setColourGrade(null);
+
+        if (difficultyGrade != null) {
+            climb.setDifficultyGrade(difficultyGrade);
         }
     }
 }
