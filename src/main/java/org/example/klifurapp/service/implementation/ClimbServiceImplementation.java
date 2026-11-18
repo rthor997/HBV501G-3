@@ -13,7 +13,7 @@ import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
-import org.example.klifurapp.strategy.ClimbSortingStrategy;
+import org.example.klifurapp.strategy.SortingStrategy;
 import org.example.klifurapp.service.ColourGradeService;
 import org.example.klifurapp.service.GradeValidator;
 import org.springframework.data.domain.Page;
@@ -36,7 +36,7 @@ public class ClimbServiceImplementation implements ClimbService {
     private final ClimbRepository climbRepository;
     private final UserRepository userRepository;
     private final RouteRepository routeRepository;
-    private final Map<String, ClimbSortingStrategy> sortingStrategies;
+    private final Map<String, SortingStrategy> sortingStrategies;
     private final ColourGradeService colourGradeService;
 
     public ClimbServiceImplementation(
@@ -44,13 +44,13 @@ public class ClimbServiceImplementation implements ClimbService {
             UserRepository userRepository,
             RouteRepository routeRepository,
             ColourGradeService colourGradeService,
-            List<ClimbSortingStrategy> strategies) {
+            List<SortingStrategy> strategies) {
         this.climbRepository = climbRepository;
         this.userRepository = userRepository;
         this.routeRepository = routeRepository;
         this.sortingStrategies = strategies.stream()
                 .collect(Collectors.toMap(
-                        ClimbSortingStrategy::getName,
+                        SortingStrategy::getName,
                         Function.identity()
                 ));
         this.colourGradeService = colourGradeService;
@@ -216,7 +216,7 @@ public class ClimbServiceImplementation implements ClimbService {
             Pageable pageable) {
 
         // Select the sorting strategy, returns 400 if invalid
-        ClimbSortingStrategy strategy = getSortingStrategy(sortBy);
+        SortingStrategy strategy = getSortingStrategy(sortBy);
 
         // Apply the selected strategy to the existing pagination
         Pageable sortedPageable = PageRequest.of(
@@ -244,9 +244,9 @@ public class ClimbServiceImplementation implements ClimbService {
     }
 
 
-    private ClimbSortingStrategy getSortingStrategy(String sortBy) {
+    private SortingStrategy getSortingStrategy(String sortBy) {
 
-        ClimbSortingStrategy strategy = sortingStrategies.get(sortBy);
+        SortingStrategy strategy = sortingStrategies.get(sortBy);
 
         if (strategy == null) {
             throw new ResponseStatusException(

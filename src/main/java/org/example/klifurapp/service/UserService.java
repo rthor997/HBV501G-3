@@ -4,7 +4,10 @@ import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
+import org.example.klifurapp.DTO.responses.UserSearchResponseDTO;
 import org.example.klifurapp.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UserService {
 
@@ -13,4 +16,9 @@ public interface UserService {
     User updateUser(Long id, UpdateUserRequestDTO dto);
     User updateUserAsAdmin(Long id, AdminUpdateUserDTO dto);
     PublicUserProfileResponseDTO getPublicUserProfile(Long userId);
+    Page<UserSearchResponseDTO> searchUsers(
+            String search,
+            String sortBy,
+            Pageable pageable
+    );
 }
