@@ -7,16 +7,20 @@ import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.exception.ConflictException;
+import org.example.klifurapp.service.ImageStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +33,8 @@ class UserServiceImplementationTest {
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock ClimbRepository climbRepository;
+    @Mock ImageStorageService imageStorage;
+
     @InjectMocks UserServiceImplementation service;
 
     @Test
@@ -178,6 +184,161 @@ class UserServiceImplementationTest {
                 service.getPublicUserProfile(5L);
 
         assertEquals(0L, result.totalClimbs());
+    }
+
+    @Test
+    void replacingProfilePictureDeletesOldFile() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("old-picture.png");
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "new.png", "image/png", new byte[]{1, 2, 3}
+        );
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+        when(imageStorage.store(file))
+                .thenReturn("new-picture.png");
+
+        service.updateProfilePicture(10L, file);
+
+        assertEquals("new-picture.png", user.getProfilePictureFilename());
+
+        var order = inOrder(imageStorage, userRepository);
+        order.verify(imageStorage).store(file);
+        order.verify(userRepository).saveAndFlush(user);
+        order.verify(imageStorage).delete("old-picture.png");
+    }
+
+    @Test
+    void databaseFailureDeletesNewlyUploadedFile() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("old-picture.png");
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "new.png", "image/png", new byte[]{1, 2, 3}
+        );
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+        when(imageStorage.store(file))
+                .thenReturn("new-picture.png");
+        when(userRepository.saveAndFlush(user))
+                .thenThrow(new RuntimeException("Database error"));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> service.updateProfilePicture(10L, file)
+        );
+
+        verify(imageStorage).delete("new-picture.png");
+        verify(imageStorage, never()).delete("old-picture.png");
+    }
+
+    @Test
+    void imageStorageFailureReturns500() throws Exception {
+        User user = new User();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "new.png", "image/png", new byte[]{1, 2, 3}
+        );
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+        when(imageStorage.store(file))
+                .thenThrow(new IOException("Disk error"));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.updateProfilePicture(10L, file)
+        );
+
+        assertEquals(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                exception.getStatusCode()
+        );
+
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+    }
+
+    @Test
+    void deletingProfilePictureRemovesReferenceAndFile() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        service.deleteProfilePicture(10L);
+
+        assertNull(user.getProfilePictureFilename());
+
+        var order = inOrder(userRepository, imageStorage);
+        order.verify(userRepository).saveAndFlush(user);
+        order.verify(imageStorage).delete("profile.png");
+    }
+
+    @Test
+    void deletingNonexistentProfilePictureDoesNothing() {
+        User user = new User();
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        assertDoesNotThrow(
+                () -> service.deleteProfilePicture(10L)
+        );
+
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verifyNoInteractions(imageStorage);
+    }
+
+    @Test
+    void imageDeletionFailureDoesNotFailRequest() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        doThrow(new IOException("Could not delete file"))
+                .when(imageStorage).delete("profile.png");
+
+        assertDoesNotThrow(
+                () -> service.deleteProfilePicture(10L)
+        );
+
+        assertNull(user.getProfilePictureFilename());
+        verify(userRepository).saveAndFlush(user);
+    }
+
+    @Test
+    void getProfilePictureFilenameReturnsFilename() {
+        User user = new User();
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        String filename = service.getProfilePictureFilename(10L);
+
+        assertEquals("profile.png", filename);
+    }
+
+    @Test
+    void getProfilePictureFilenameMissingUserReturns404() {
+        when(userRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getProfilePictureFilename(999L)
+        );
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                exception.getStatusCode()
+        );
     }
 
     private static User user(String username, String email) {

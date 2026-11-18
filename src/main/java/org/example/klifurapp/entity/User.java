@@ -99,6 +99,7 @@ public class User {
         return profilePictureFilename;
     }
 
-    public void setProfilePictureFilename(String newFilename) {
+    public void setProfilePictureFilename(String profilePictureFilename) {
+        this.profilePictureFilename = profilePictureFilename;
     }
 }
