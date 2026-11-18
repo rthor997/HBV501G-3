@@ -69,14 +69,26 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found")
                 );
 
+        String profilePicture = user.getProfilePictureFilename();
+
         userRepository.delete(user);
+        userRepository.flush();
+
+        if (profilePicture != null) {
+            try {
+                imageStorage.delete(profilePicture);
+            } catch (IOException e) {
+                System.err.println(
+                        "Failed to delete profile picture, User deletion success: " + e.getMessage()
+                );
+            }
+        }
     }
 
     @Override

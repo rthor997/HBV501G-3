@@ -66,6 +66,39 @@ class UserServiceImplementationTest {
     }
 
     @Test
+    void deletingUserAlsoDeletesProfilePicture() throws Exception {
+        User user = user("anna", "anna@example.com");
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
+
+        service.deleteUser(1L);
+
+        var order = inOrder(userRepository, imageStorage);
+
+        order.verify(userRepository).delete(user);
+        order.verify(userRepository).flush();
+        order.verify(imageStorage).delete("profile.png");
+    }
+
+    @Test
+    void deletingUserWithoutProfilePictureDoesNotDeleteFile()
+            throws Exception {
+
+        User user = user("anna", "anna@example.com");
+
+        when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
+
+        service.deleteUser(1L);
+
+        verify(userRepository).delete(user);
+        verify(userRepository).flush();
+        verifyNoInteractions(imageStorage);
+    }
+
+    @Test
     void deleteMissingUserDoesNotCallDelete() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
