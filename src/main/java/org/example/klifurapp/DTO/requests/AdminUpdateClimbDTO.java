@@ -22,6 +22,8 @@ public record AdminUpdateClimbDTO(
     @Size(max = 2000, message = "Notes must be at most 2000 characters")
     String notes,
 
-    WallIncline wallIncline
+    WallIncline wallIncline,
+
+    Long colourGradeId
 ){}
 

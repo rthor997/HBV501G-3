@@ -147,18 +147,24 @@ public class ColourGradeServiceImplementation implements ColourGradeService {
     }
 
     @Override
-    @Transactional
-    public ColourGrade useColourGrade(Long colourGradeId, User user) {
+    @Transactional(readOnly = true)
+    public ColourGrade getUsableColourGrade(Long colourGradeId, User user) {
         ColourGrade colourGrade = colourGradeRepository.findById(colourGradeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Colour grade not found"));
 
-        ColourGradePreset preset = colourGrade.getPreset();
-
-        if (!preset.isVisibleTo(user.getId())) {
+        if (!colourGrade.getPreset().isVisibleTo(user.getId())) {
             throw new ForbiddenException("You do not have access to this colour grade");
         }
 
-        user.setSelectedColourPreset(preset);
+        return colourGrade;
+    }
+
+    @Override
+    @Transactional
+    public ColourGrade useColourGrade(Long colourGradeId, User user) {
+        ColourGrade colourGrade = getUsableColourGrade(colourGradeId, user);
+
+        user.setSelectedColourPreset(colourGrade.getPreset());
         userRepository.save(user);
 
         return colourGrade;

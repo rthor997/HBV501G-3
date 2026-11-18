@@ -1,5 +1,6 @@
 package org.example.klifurapp.service.implementation;
 
+import org.example.klifurapp.DTO.requests.AdminUpdateClimbDTO;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
 import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
 import org.example.klifurapp.DTO.responses.ClimbResponseDTO;
@@ -163,7 +164,7 @@ class ClimbServiceImplementationTest {
                         null,
                         "Updated notes",
                         null
-                );
+                , null);
 
         ClimbResponseDTO result =
                 service.updateClimb(5L, 10L, dto);
@@ -189,7 +190,7 @@ class ClimbServiceImplementationTest {
         when(climbs.save(climb)).thenReturn(climb);
         UpdateClimbRequestDTO dto =
                 new UpdateClimbRequestDTO(null, null, null,
-                        null, "New notes", null);
+                        null, "New notes", null, null);
         ClimbResponseDTO result = service.updateClimb(5L, 10L, dto);
         assertEquals("V3", result.difficultyGrade());
         assertEquals(GradingSystem.V_SCALE, result.gradingSystem());
@@ -206,7 +207,7 @@ class ClimbServiceImplementationTest {
         when(climbs.findById(5L)).thenReturn(Optional.of(climb));
         UpdateClimbRequestDTO dto =
                 new UpdateClimbRequestDTO(null, null,
-                        null, null, "Trying to edit", null);
+                        null, null, "Trying to edit", null, null);
         assertThrows(ForbiddenException.class, () -> service.updateClimb(5L, 20L, dto));
         verify(climbs, never()).save(any());
     }
@@ -217,7 +218,7 @@ class ClimbServiceImplementationTest {
         when(climbs.findById(999L)).thenReturn(Optional.empty());
         UpdateClimbRequestDTO dto =
                 new UpdateClimbRequestDTO(null, null,
-                        null, null, "New notes", null);
+                        null, null, "New notes", null, null);
         assertThrows(ResourceNotFoundException.class, () -> service.updateClimb(999L, 10L, dto));
         verify(climbs, never()).save(any());
     }
@@ -231,12 +232,123 @@ class ClimbServiceImplementationTest {
         when(climbs.findById(5L)).thenReturn(Optional.of(climb));
         UpdateClimbRequestDTO dto =
                 new UpdateClimbRequestDTO(null, "invalid",
-                        null, null, null, null);
+                        null, null, null, null, null);
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
                 () -> service.updateClimb(5L, 10L, dto)
         );
         assertEquals("Invalid difficulty grade for V_SCALE", exception.getMessage());
         verify(climbs, never()).save(any());
+    }
+
+    private Climb existingClimb(GradingSystem system, String grade, ColourGrade colourGrade) throws Exception {
+        Climb climb = new Climb();
+        climb.setUser(user(10L));
+        climb.setGradingSystem(system);
+        climb.setDifficultyGrade(grade);
+        climb.setColourGrade(colourGrade);
+        climb.setClimbingStyle(ClimbingStyle.BOULDERING);
+        climb.setDate(LocalDate.of(2026, 11, 1));
+        when(climbs.findById(5L)).thenReturn(Optional.of(climb));
+        when(climbs.save(climb)).thenReturn(climb);
+        return climb;
+    }
+
+    private ColourGrade colour(String name) {
+        ColourGrade grade = new ColourGrade();
+        grade.setColour(name);
+        return grade;
+    }
+
+    private UpdateClimbRequestDTO patch(GradingSystem system, String grade, Long colourGradeId, String notes) {
+        return new UpdateClimbRequestDTO(system, grade, null, null, notes, null, colourGradeId);
+    }
+
+    @Test void switchingFromVScaleToColourUsesColourGrade() throws Exception {
+        Climb climb = existingClimb(GradingSystem.V_SCALE, "V3", null);
+        ColourGrade blue = colour("Blue");
+        when(colourGrades.useColourGrade(7L, climb.getUser())).thenReturn(blue);
+
+        ClimbResponseDTO result = service.updateClimb(5L, 10L, patch(GradingSystem.COLOUR, null, 7L, null));
+
+        assertEquals(GradingSystem.COLOUR, result.gradingSystem());
+        assertEquals("Blue", result.difficultyGrade());
+        assertSame(blue, climb.getColourGrade());
+    }
+
+    @Test void switchingToColourWithoutColourGradeIdIsRejected() throws Exception {
+        existingClimb(GradingSystem.V_SCALE, "V3", null);
+
+        assertThrows(BadRequestException.class,
+                () -> service.updateClimb(5L, 10L, patch(GradingSystem.COLOUR, null, null, null)));
+        verify(climbs, never()).save(any());
+    }
+
+    @Test void switchingFromColourToFontClearsColourGrade() throws Exception {
+        Climb climb = existingClimb(GradingSystem.COLOUR, "Blue", colour("Blue"));
+
+        ClimbResponseDTO result = service.updateClimb(5L, 10L, patch(GradingSystem.FONT, "6A", null, null));
+
+        assertEquals(GradingSystem.FONT, result.gradingSystem());
+        assertEquals("6A", result.difficultyGrade());
+        assertNull(climb.getColourGrade());
+    }
+
+    @Test void switchingFromColourWithoutDifficultyGradeIsRejected() throws Exception {
+        Climb climb = existingClimb(GradingSystem.COLOUR, "Blue", colour("Blue"));
+
+        assertThrows(BadRequestException.class,
+                () -> service.updateClimb(5L, 10L, patch(GradingSystem.V_SCALE, null, null, null)));
+        assertEquals(GradingSystem.COLOUR, climb.getGradingSystem());
+        assertNotNull(climb.getColourGrade());
+        verify(climbs, never()).save(any());
+    }
+
+    @Test void editingNotesOnColourClimbKeepsColourGrade() throws Exception {
+        ColourGrade blue = colour("Blue");
+        Climb climb = existingClimb(GradingSystem.COLOUR, "Blue", blue);
+
+        ClimbResponseDTO result = service.updateClimb(5L, 10L, patch(null, null, null, "Flash"));
+
+        assertEquals("Blue", result.difficultyGrade());
+        assertEquals("Flash", result.notes());
+        assertSame(blue, climb.getColourGrade());
+        verifyNoInteractions(colourGrades);
+    }
+
+    @Test void changingColourOnColourClimbUsesNewColourGrade() throws Exception {
+        Climb climb = existingClimb(GradingSystem.COLOUR, "Blue", colour("Blue"));
+        when(colourGrades.useColourGrade(8L, climb.getUser())).thenReturn(colour("Red"));
+
+        ClimbResponseDTO result = service.updateClimb(5L, 10L, patch(null, null, 8L, null));
+
+        assertEquals("Red", result.difficultyGrade());
+    }
+
+    @Test void difficultyGradeOnColourClimbIsRejected() throws Exception {
+        existingClimb(GradingSystem.COLOUR, "Blue", colour("Blue"));
+
+        assertThrows(BadRequestException.class,
+                () -> service.updateClimb(5L, 10L, patch(null, "V4", null, null)));
+        verify(climbs, never()).save(any());
+    }
+
+    @Test void colourGradeIdOnVScaleClimbIsRejected() throws Exception {
+        existingClimb(GradingSystem.V_SCALE, "V3", null);
+
+        assertThrows(BadRequestException.class,
+                () -> service.updateClimb(5L, 10L, patch(null, null, 7L, null)));
+        verifyNoInteractions(colourGrades);
+    }
+
+    @Test void adminColourUpdateDoesNotChangeOwnersSelectedPreset() throws Exception {
+        Climb climb = existingClimb(GradingSystem.V_SCALE, "V3", null);
+        when(colourGrades.getUsableColourGrade(7L, climb.getUser())).thenReturn(colour("Blue"));
+
+        Climb result = service.updateClimbAsAdmin(5L,
+                new AdminUpdateClimbDTO(GradingSystem.COLOUR, null, null, null, null, null, 7L));
+
+        assertEquals("Blue", result.getDifficultyGrade());
+        verify(colourGrades, never()).useColourGrade(anyLong(), any());
     }
 }

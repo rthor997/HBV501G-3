@@ -2,6 +2,7 @@ package org.example.klifurapp.integration;
 
 import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.DTO.requests.CreateClimbRequestDTO;
+import org.example.klifurapp.DTO.requests.UpdateClimbRequestDTO;
 import org.example.klifurapp.DTO.requests.CreateColourGradePresetRequestDTO;
 import org.example.klifurapp.DTO.requests.CreateColourGradeRequestDTO;
 import org.example.klifurapp.DTO.responses.ColourGradePresetResponseDTO;
@@ -218,5 +219,25 @@ class ColourGradeIntegrationTest {
             assertTrue(GradeValidator.compare(grade.getGradingSystem(), grade.getMinGrade(), grade.getMaxGrade()) <= 0,
                     grade.getColour());
         }
+    }
+
+    @Test
+    void patchSwitchesBetweenColourAndVScale() {
+        User user = createUser("i");
+        ColourGradePresetResponseDTO preset = klifurhusid(user.getId());
+        Long blueId = preset.colourGrades().stream().filter(g -> g.colour().equals("Blue")).findFirst().orElseThrow().id();
+        Long redId = preset.colourGrades().stream().filter(g -> g.colour().equals("Red")).findFirst().orElseThrow().id();
+        Climb climb = climbService.createClimb(colourClimb(blueId), user.getId());
+
+        climbService.updateClimb(climb.getId(), user.getId(),
+                new UpdateClimbRequestDTO(null, null, null, null, null, null, redId));
+        assertEquals("Red", climbRepository.findById(climb.getId()).orElseThrow().getDifficultyGrade());
+
+        climbService.updateClimb(climb.getId(), user.getId(),
+                new UpdateClimbRequestDTO(GradingSystem.V_SCALE, "V4", null, null, null, null, null));
+        Climb saved = climbRepository.findById(climb.getId()).orElseThrow();
+        assertEquals(GradingSystem.V_SCALE, saved.getGradingSystem());
+        assertEquals("V4", saved.getDifficultyGrade());
+        assertNull(saved.getColourGradeId());
     }
 }

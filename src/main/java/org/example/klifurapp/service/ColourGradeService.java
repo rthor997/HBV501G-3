@@ -24,5 +24,7 @@ public interface ColourGradeService {
 
     Optional<ColourGradePresetResponseDTO> getSelectedPreset(Long userId);
 
+    ColourGrade getUsableColourGrade(Long colourGradeId, User user);
+
     ColourGrade useColourGrade(Long colourGradeId, User user);
 }
