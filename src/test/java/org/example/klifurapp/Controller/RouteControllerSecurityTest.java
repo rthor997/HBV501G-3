@@ -236,5 +236,22 @@ class RouteControllerSecurityTest {
         verifyNoInteractions(routeService);
     }
 
+    @Test
+    void updatingRouteWithBlankNameReturns400() throws Exception {
+        authenticate("admin-token", 22L, Role.ADMIN);
+
+        mvc.perform(put("/api/routes/admin/42")
+                        .header("Authorization", "Bearer admin-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                  "name": "   "
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.name").exists());
+
+        verifyNoInteractions(routeService);
+    }
 
 }

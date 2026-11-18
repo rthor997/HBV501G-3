@@ -1,15 +1,27 @@
 package org.example.klifurapp.DTO.requests;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class LogWorkoutRequestDTO {
 
-    @NotBlank
+    @NotBlank(message = "Exercise name is required")
+    @Size(max = 100, message = "Exercise name must be at most 100 characters")
     private String exerciseName;
 
+    @Min(value = 1, message = "Sets must be at least 1")
     private Integer sets;
+
+    @Min(value = 1, message = "Repetitions must be at least 1")
     private Integer repetitions;
+
+    @DecimalMin(value = "0.0", message = "Weight cannot be negative")
     private Double weight;
+
+    @Min(value = 1, message = "Duration must be at least 1 minute")
     private Integer durationMinutes;
 
     public String getExerciseName() {
