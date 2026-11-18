@@ -1,6 +1,8 @@
 package org.example.klifurapp.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import  jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +37,20 @@ public class User {
             cascade = CascadeType.REMOVE
     )
     private List<Workout> workouts = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "selected_colour_preset_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private ColourGradePreset selectedColourPreset;
+
+    public ColourGradePreset getSelectedColourPreset() {
+        return selectedColourPreset;
+    }
+
+    public void setSelectedColourPreset(ColourGradePreset selectedColourPreset) {
+        this.selectedColourPreset = selectedColourPreset;
+    }
 
     public  User() {
 

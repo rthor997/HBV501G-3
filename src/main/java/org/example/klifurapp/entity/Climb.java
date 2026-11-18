@@ -1,6 +1,9 @@
 package org.example.klifurapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import java.time.LocalDate;
 
 @Entity
@@ -38,7 +41,25 @@ public class Climb {
     @JoinColumn(name = "route_id")
     private Route route;
 
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "colour_grade_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    private ColourGrade colourGrade;
+
     public Climb() {
+    }
+
+    public ColourGrade getColourGrade() {
+        return colourGrade;
+    }
+
+    public void setColourGrade(ColourGrade colourGrade) {
+        this.colourGrade = colourGrade;
+    }
+
+    public Long getColourGradeId() {
+        return colourGrade != null ? colourGrade.getId() : null;
     }
 
     public Long getId() {
