@@ -16,6 +16,7 @@ import org.example.klifurapp.service.ClimbService;
 import org.example.klifurapp.strategy.SortingStrategy;
 import org.example.klifurapp.service.ColourGradeService;
 import org.example.klifurapp.service.GradeValidator;
+import org.example.klifurapp.strategy.ClimbSortingStrategy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ public class ClimbServiceImplementation implements ClimbService {
     private final RouteRepository routeRepository;
     private final Map<String, SortingStrategy> sortingStrategies;
     private final ColourGradeService colourGradeService;
+    private final Map<String, ClimbSortingStrategy> sortingStrategies;
 
     public ClimbServiceImplementation(
             ClimbRepository climbRepository,
@@ -54,6 +56,11 @@ public class ClimbServiceImplementation implements ClimbService {
                         Function.identity()
                 ));
         this.colourGradeService = colourGradeService;
+        this.sortingStrategies = strategies.stream()
+                .collect(Collectors.toMap(
+                        ClimbSortingStrategy::getName,
+                        Function.identity()
+                ));
     }
 
     @Override

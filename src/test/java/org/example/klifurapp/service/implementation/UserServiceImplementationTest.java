@@ -10,6 +10,7 @@ import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.exception.ConflictException;
 import org.example.klifurapp.strategy.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.example.klifurapp.service.ImageStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -19,12 +20,15 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.io.IOException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +41,7 @@ class UserServiceImplementationTest {
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock ClimbRepository climbRepository;
+    @Mock ImageStorageService imageStorage;
     UserServiceImplementation service;
 
     @BeforeEach
@@ -80,6 +85,39 @@ class UserServiceImplementationTest {
         service.deleteUser(1L);
 
         verify(userRepository).delete(user);
+    }
+
+    @Test
+    void deletingUserAlsoDeletesProfilePicture() throws Exception {
+        User user = user("anna", "anna@example.com");
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
+
+        service.deleteUser(1L);
+
+        var order = inOrder(userRepository, imageStorage);
+
+        order.verify(userRepository).delete(user);
+        order.verify(userRepository).flush();
+        order.verify(imageStorage).delete("profile.png");
+    }
+
+    @Test
+    void deletingUserWithoutProfilePictureDoesNotDeleteFile()
+            throws Exception {
+
+        User user = user("anna", "anna@example.com");
+
+        when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
+
+        service.deleteUser(1L);
+
+        verify(userRepository).delete(user);
+        verify(userRepository).flush();
+        verifyNoInteractions(imageStorage);
     }
 
     @Test
@@ -308,6 +346,161 @@ class UserServiceImplementationTest {
                 .findByUsernameContainingIgnoreCase(
                         anyString(), any()
                 );
+    }
+  
+    @Test
+    void replacingProfilePictureDeletesOldFile() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("old-picture.png");
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "new.png", "image/png", new byte[]{1, 2, 3}
+        );
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+        when(imageStorage.store(file))
+                .thenReturn("new-picture.png");
+
+        service.updateProfilePicture(10L, file);
+
+        assertEquals("new-picture.png", user.getProfilePictureFilename());
+
+        var order = inOrder(imageStorage, userRepository);
+        order.verify(imageStorage).store(file);
+        order.verify(userRepository).saveAndFlush(user);
+        order.verify(imageStorage).delete("old-picture.png");
+    }
+
+    @Test
+    void databaseFailureDeletesNewlyUploadedFile() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("old-picture.png");
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "new.png", "image/png", new byte[]{1, 2, 3}
+        );
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+        when(imageStorage.store(file))
+                .thenReturn("new-picture.png");
+        when(userRepository.saveAndFlush(user))
+                .thenThrow(new RuntimeException("Database error"));
+
+        assertThrows(
+                RuntimeException.class,
+                () -> service.updateProfilePicture(10L, file)
+        );
+
+        verify(imageStorage).delete("new-picture.png");
+        verify(imageStorage, never()).delete("old-picture.png");
+    }
+
+    @Test
+    void imageStorageFailureReturns500() throws Exception {
+        User user = new User();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "new.png", "image/png", new byte[]{1, 2, 3}
+        );
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+        when(imageStorage.store(file))
+                .thenThrow(new IOException("Disk error"));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.updateProfilePicture(10L, file)
+        );
+
+        assertEquals(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                exception.getStatusCode()
+        );
+
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+    }
+
+    @Test
+    void deletingProfilePictureRemovesReferenceAndFile() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        service.deleteProfilePicture(10L);
+
+        assertNull(user.getProfilePictureFilename());
+
+        var order = inOrder(userRepository, imageStorage);
+        order.verify(userRepository).saveAndFlush(user);
+        order.verify(imageStorage).delete("profile.png");
+    }
+
+    @Test
+    void deletingNonexistentProfilePictureDoesNothing() {
+        User user = new User();
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        assertDoesNotThrow(
+                () -> service.deleteProfilePicture(10L)
+        );
+
+        verify(userRepository, never()).saveAndFlush(any(User.class));
+        verifyNoInteractions(imageStorage);
+    }
+
+    @Test
+    void imageDeletionFailureDoesNotFailRequest() throws Exception {
+        User user = new User();
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        doThrow(new IOException("Could not delete file"))
+                .when(imageStorage).delete("profile.png");
+
+        assertDoesNotThrow(
+                () -> service.deleteProfilePicture(10L)
+        );
+
+        assertNull(user.getProfilePictureFilename());
+        verify(userRepository).saveAndFlush(user);
+    }
+
+    @Test
+    void getProfilePictureFilenameReturnsFilename() {
+        User user = new User();
+        user.setProfilePictureFilename("profile.png");
+
+        when(userRepository.findById(10L))
+                .thenReturn(Optional.of(user));
+
+        String filename = service.getProfilePictureFilename(10L);
+
+        assertEquals("profile.png", filename);
+    }
+
+    @Test
+    void getProfilePictureFilenameMissingUserReturns404() {
+        when(userRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getProfilePictureFilename(999L)
+        );
+
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                exception.getStatusCode()
+        );
     }
 
     private static User user(String username, String email) {

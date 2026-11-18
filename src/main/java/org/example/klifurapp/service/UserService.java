@@ -8,6 +8,7 @@ import org.example.klifurapp.DTO.responses.UserSearchResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
@@ -21,4 +22,7 @@ public interface UserService {
             String sortBy,
             Pageable pageable
     );
+    String updateProfilePicture(Long userId, MultipartFile file);
+    void deleteProfilePicture(Long userId);
+    String getProfilePictureFilename(Long userId);
 }
