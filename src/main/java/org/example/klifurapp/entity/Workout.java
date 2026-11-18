@@ -2,6 +2,9 @@ package org.example.klifurapp.entity;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "workouts")
 public class Workout {
@@ -21,6 +24,14 @@ public class Workout {
     private Integer repetitions;
     private Double weight;
     private Integer durationMinutes;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "workout_muscle_groups",
+            joinColumns = @JoinColumn(name = "workout_id"),
+            inverseJoinColumns = @JoinColumn(name = "muscle_group_id")
+    )
+    private Set<MuscleGroup> muscleGroups = new HashSet<>();
 
     public Workout() {
     }
@@ -79,5 +90,13 @@ public class Workout {
 
     public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
+    }
+
+    public Set<MuscleGroup> getMuscleGroups() {
+        return muscleGroups;
+    }
+
+    public void setMuscleGroups(Set<MuscleGroup> muscleGroups) {
+        this.muscleGroups = muscleGroups;
     }
 }

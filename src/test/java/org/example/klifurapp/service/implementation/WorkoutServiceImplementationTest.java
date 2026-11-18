@@ -3,11 +3,14 @@ package org.example.klifurapp.service.implementation;
 import org.example.klifurapp.DTO.requests.EditWorkoutRequestDTO;
 import org.example.klifurapp.DTO.requests.LogWorkoutRequestDTO;
 import org.example.klifurapp.DTO.requests.WorkoutResponseDTO;
+import org.example.klifurapp.entity.MuscleGroup;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.entity.Workout;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.repository.WorkoutRepository;
+import org.example.klifurapp.exception.BadRequestException;
 import org.example.klifurapp.exception.ResourceNotFoundException;
+import org.example.klifurapp.service.MuscleGroupService;
 import org.example.klifurapp.exception.ForbiddenException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +38,7 @@ class WorkoutServiceImplementationTest {
 
     @Mock WorkoutRepository workoutRepository;
     @Mock UserRepository userRepository;
+    @Mock MuscleGroupService muscleGroupService;
     @InjectMocks WorkoutServiceImplementation service;
 
     @Test
@@ -189,5 +194,66 @@ class WorkoutServiceImplementationTest {
         workout.setWeight(40.0);
         workout.setDurationMinutes(20);
         return workout;
+    }
+
+    @Test
+    void logWorkoutStoresMuscleGroups() {
+        LogWorkoutRequestDTO dto = new LogWorkoutRequestDTO();
+        dto.setExerciseName("Pull-ups");
+        dto.setMuscleGroupIds(Set.of(1L, 2L));
+        Set<MuscleGroup> groups = Set.of(new MuscleGroup("Back"), new MuscleGroup("Biceps"));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user(10L)));
+        when(muscleGroupService.findAllByIds(Set.of(1L, 2L))).thenReturn(groups);
+        when(workoutRepository.save(any(Workout.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Workout result = service.logWorkout(dto, 10L);
+
+        assertEquals(groups, result.getMuscleGroups());
+    }
+
+    @Test
+    void logWorkoutWithUnknownMuscleGroupIsRejected() {
+        LogWorkoutRequestDTO dto = new LogWorkoutRequestDTO();
+        dto.setExerciseName("Pull-ups");
+        dto.setMuscleGroupIds(Set.of(999L));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user(10L)));
+        when(muscleGroupService.findAllByIds(Set.of(999L)))
+                .thenThrow(new BadRequestException("Unknown muscle group id(s): [999]"));
+
+        assertThrows(BadRequestException.class, () -> service.logWorkout(dto, 10L));
+        verify(workoutRepository, never()).save(any(Workout.class));
+    }
+
+    @Test
+    void updateWithoutMuscleGroupIdsKeepsExistingGroups() {
+        Workout workout = workout(5L, user(10L));
+        Set<MuscleGroup> existing = Set.of(new MuscleGroup("Core"));
+        workout.setMuscleGroups(existing);
+        EditWorkoutRequestDTO dto = new EditWorkoutRequestDTO();
+        dto.setExerciseName("Plank");
+        when(workoutRepository.findById(5L)).thenReturn(Optional.of(workout));
+        when(workoutRepository.save(workout)).thenReturn(workout);
+
+        Workout result = service.updateWorkout(5L, dto, 10L);
+
+        assertEquals(existing, result.getMuscleGroups());
+        verifyNoInteractions(muscleGroupService);
+    }
+
+    @Test
+    void updateWithMuscleGroupIdsReplacesGroups() {
+        Workout workout = workout(5L, user(10L));
+        workout.setMuscleGroups(Set.of(new MuscleGroup("Core")));
+        Set<MuscleGroup> legs = Set.of(new MuscleGroup("Legs"));
+        EditWorkoutRequestDTO dto = new EditWorkoutRequestDTO();
+        dto.setExerciseName("Squats");
+        dto.setMuscleGroupIds(Set.of(9L));
+        when(workoutRepository.findById(5L)).thenReturn(Optional.of(workout));
+        when(muscleGroupService.findAllByIds(Set.of(9L))).thenReturn(legs);
+        when(workoutRepository.save(workout)).thenReturn(workout);
+
+        Workout result = service.updateWorkout(5L, dto, 10L);
+
+        assertEquals(legs, result.getMuscleGroups());
     }
 }
