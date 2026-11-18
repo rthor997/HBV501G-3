@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.awt.*;
 import java.io.IOException;
@@ -213,6 +212,8 @@ public class UserServiceImplementation implements UserService {
         }
 
         return strategy;
+    }
+
     public String updateProfilePicture(
             Long userId,
             MultipartFile file
@@ -256,9 +257,7 @@ public class UserServiceImplementation implements UserService {
             try {
                 imageStorage.delete(oldFilename);
             } catch (IOException e) {
-                // Log the cleanup failure.
-                // The new image is still associated with the user.
-                System.err.println("" + e.getMessage());
+                System.err.println("User profile picture deletion failed" + e.getMessage());
             }
         }
 

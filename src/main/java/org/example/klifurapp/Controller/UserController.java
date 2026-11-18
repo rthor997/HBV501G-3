@@ -125,6 +125,8 @@ public class UserController {
                 userService.searchUsers(search, sortBy, pageable);
 
         return ResponseEntity.ok(results);
+    }
+
     @PutMapping(
             value = "/me/profile-picture",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
