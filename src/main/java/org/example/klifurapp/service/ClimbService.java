@@ -23,8 +23,8 @@ public interface ClimbService {
             String grade,
             LocalDate startDate,
             LocalDate endDate,
-            Pageable pageable
-    );
+            String sortBy,
+            Pageable pageable);
 
     void deleteClimb(Long id, Long userId);
 }
