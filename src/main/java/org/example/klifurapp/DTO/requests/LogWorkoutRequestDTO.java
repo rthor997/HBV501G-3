@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.Set;
+
 public class LogWorkoutRequestDTO {
 
     @NotBlank(message = "Exercise name is required")
@@ -23,6 +25,8 @@ public class LogWorkoutRequestDTO {
 
     @Min(value = 1, message = "Duration must be at least 1 minute")
     private Integer durationMinutes;
+
+    private Set<Long> muscleGroupIds;
 
     public String getExerciseName() {
         return exerciseName;
@@ -62,5 +66,13 @@ public class LogWorkoutRequestDTO {
 
     public void setDurationMinutes(Integer durationMinutes) {
         this.durationMinutes = durationMinutes;
+    }
+
+    public Set<Long> getMuscleGroupIds() {
+        return muscleGroupIds;
+    }
+
+    public void setMuscleGroupIds(Set<Long> muscleGroupIds) {
+        this.muscleGroupIds = muscleGroupIds;
     }
 }
