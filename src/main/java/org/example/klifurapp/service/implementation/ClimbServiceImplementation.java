@@ -13,12 +13,20 @@ import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ClimbService;
+import org.example.klifurapp.strategy.ClimbSortingStrategy;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ClimbServiceImplementation implements ClimbService {
@@ -26,14 +34,21 @@ public class ClimbServiceImplementation implements ClimbService {
     private final ClimbRepository climbRepository;
     private final UserRepository userRepository;
     private final RouteRepository routeRepository;
+    private final Map<String, ClimbSortingStrategy> sortingStrategies;
 
     public ClimbServiceImplementation(
             ClimbRepository climbRepository,
             UserRepository userRepository,
-            RouteRepository routeRepository) {
+            RouteRepository routeRepository,
+            List<ClimbSortingStrategy> strategies) {
         this.climbRepository = climbRepository;
         this.userRepository = userRepository;
         this.routeRepository = routeRepository;
+        this.sortingStrategies = strategies.stream()
+                .collect(Collectors.toMap(
+                        ClimbSortingStrategy::getName,
+                        Function.identity()
+                ));
     }
 
     @Override
@@ -178,7 +193,18 @@ public class ClimbServiceImplementation implements ClimbService {
             String grade,
             LocalDate startDate,
             LocalDate endDate,
+            String sortBy,
             Pageable pageable) {
+
+        // Select the sorting strategy, returns 400 if invalid
+        ClimbSortingStrategy strategy = getSortingStrategy(sortBy);
+
+        // Apply the selected strategy to the existing pagination
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                strategy.getSort()
+        );
 
         Page<Climb> climbs =
                 climbRepository.findFilteredClimbs(
@@ -186,7 +212,7 @@ public class ClimbServiceImplementation implements ClimbService {
                         grade,
                         startDate,
                         endDate,
-                        pageable
+                        sortedPageable
                 );
 
         return climbs.map(climb ->
@@ -196,6 +222,21 @@ public class ClimbServiceImplementation implements ClimbService {
                         climb.getDate()
                 )
         );
+    }
+
+
+    private ClimbSortingStrategy getSortingStrategy(String sortBy) {
+
+        ClimbSortingStrategy strategy = sortingStrategies.get(sortBy);
+
+        if (strategy == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid sorting option: " + sortBy
+            );
+        }
+
+        return strategy;
     }
 
 
