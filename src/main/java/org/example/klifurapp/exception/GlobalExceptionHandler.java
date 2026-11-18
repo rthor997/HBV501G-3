@@ -23,7 +23,6 @@ import java.net.URI;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-
     private ResponseEntity<ProblemDetail> buildError(
             HttpStatus status,
             String message,

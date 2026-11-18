@@ -1,4 +1,3 @@
-
 package org.example.klifurapp.Controller;
 
 import jakarta.validation.Valid;
@@ -34,7 +33,6 @@ public class RouteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createRoute);
     }
 
-    // UC12 - View Route Details
     @GetMapping("/{routeId}")
     public ResponseEntity<RouteDetailsResponseDTO> getRouteDetails(
             @PathVariable Long routeId,
@@ -48,7 +46,6 @@ public class RouteController {
         return ResponseEntity.ok(route);
     }
 
-    // Admin - Update Route
     @PutMapping("/admin/{routeId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Route> updateRouteAsAdmin(
