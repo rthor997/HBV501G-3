@@ -12,10 +12,16 @@ import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.RouteRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ColourGradeService;
+import org.example.klifurapp.strategy.NewestFirstStrategy;
+import org.example.klifurapp.strategy.OldestFirstStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.List;
@@ -30,7 +36,19 @@ class ClimbServiceImplementationTest {
     RouteRepository routes = mock(RouteRepository.class);
     ClimbServiceImplementation service;
     ColourGradeService colourGrades = mock(ColourGradeService.class);
-    @BeforeEach void setup() { service = new ClimbServiceImplementation(climbs, users, routes, colourGrades); }
+    @BeforeEach
+    void setup() {
+        service = new ClimbServiceImplementation(
+                climbs,
+                users,
+                routes,
+                colourGrades,
+                List.of(
+                        new NewestFirstStrategy(),
+                        new OldestFirstStrategy()
+                )
+        );
+    }
 
     private User user(long id) throws Exception {
         User user = new User();
@@ -350,5 +368,72 @@ class ClimbServiceImplementationTest {
 
         assertEquals("Blue", result.getDifficultyGrade());
         verify(colourGrades, never()).useColourGrade(anyLong(), any());
+    }
+
+    @Test
+    void getClimbingHistoryUsesOldestSortingStrategy() {
+
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        PageRequest expectedPageable = PageRequest.of(
+                0,
+                10,
+                Sort.by(
+                        Sort.Order.asc("date"),
+                        Sort.Order.asc("id")
+                )
+        );
+
+        when(climbs.findFilteredClimbs(
+                eq(10L),
+                isNull(),
+                isNull(),
+                isNull(),
+                eq(expectedPageable)
+        )).thenReturn(new PageImpl<>(List.of()));
+
+        service.getClimbingHistory(
+                10L,
+                null,
+                null,
+                null,
+                "oldest",
+                pageable
+        );
+
+        verify(climbs).findFilteredClimbs(
+                eq(10L),
+                isNull(),
+                isNull(),
+                isNull(),
+                eq(expectedPageable)
+        );
+    }
+
+    @Test
+    void invalidSortingStrategyThrowsBadRequest() {
+
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.getClimbingHistory(
+                        10L,
+                        null,
+                        null,
+                        null,
+                        "invalid",
+                        pageable
+                )
+        );
+
+        assertEquals(
+                HttpStatus.BAD_REQUEST,
+                exception.getStatusCode()
+        );
+
+        verify(climbs, never()).findFilteredClimbs(
+                any(), any(), any(), any(), any()
+        );
     }
 }

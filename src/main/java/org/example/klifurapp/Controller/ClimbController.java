@@ -92,6 +92,7 @@ public class ClimbController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate endDate,
+            @RequestParam(defaultValue = "newest") String sortBy,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
@@ -105,6 +106,7 @@ public class ClimbController {
                         grade,
                         startDate,
                         endDate,
+                        sortBy,
                         pageable);
         return ResponseEntity.ok(PageResponseDTO.from(result));
     }
