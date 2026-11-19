@@ -4,7 +4,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 @Component
-public class NewestFirstStrategy implements ClimbSortingStrategy {
+public class NewestFirstStrategy implements SortingStrategy {
 
     @Override
     public String getName() {

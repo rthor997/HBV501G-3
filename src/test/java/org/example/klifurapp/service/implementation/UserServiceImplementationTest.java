@@ -3,16 +3,22 @@ package org.example.klifurapp.service.implementation;
 import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
+import org.example.klifurapp.DTO.responses.UserSearchResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.exception.ResourceNotFoundException;
 import org.example.klifurapp.exception.ConflictException;
+import org.example.klifurapp.strategy.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.example.klifurapp.service.ImageStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +26,7 @@ import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.repository.ClimbRepository;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -34,8 +41,23 @@ class UserServiceImplementationTest {
     @Mock PasswordEncoder passwordEncoder;
     @Mock ClimbRepository climbRepository;
     @Mock ImageStorageService imageStorage;
+    UserServiceImplementation service;
 
-    @InjectMocks UserServiceImplementation service;
+    @BeforeEach
+    void setup() {
+        service = new UserServiceImplementation(
+                userRepository,
+                passwordEncoder,
+                imageStorage,
+                climbRepository,
+                List.of(
+                        new NewestUserFirstStrategy(),
+                        new OldestUserFirstStrategy(),
+                        new AlphabeticalUserStrategy(),
+                        new ReverseAlphabeticalUserStrategy()
+                )
+        );
+    }
 
     @Test
     void getUserReturnsResponseDto() {
@@ -219,6 +241,113 @@ class UserServiceImplementationTest {
         assertEquals(0L, result.totalClimbs());
     }
 
+    @Test
+    void searchUsersReturnsMatchingUserDTOs() {
+        User anna = user("anna", "anna@example.com");
+        setId(anna, 1L);
+
+        PageRequest pageable = PageRequest.of(0, 20);
+        PageRequest sortedPageable = PageRequest.of(
+                0, 20, Sort.by(
+                        Sort.Order.desc("id")
+                )
+        );
+
+        when(userRepository.findByUsernameContainingIgnoreCase(
+                eq("anna"), eq(sortedPageable)
+        )).thenReturn(new PageImpl<>(List.of(anna), sortedPageable, 1));
+
+        Page<UserSearchResponseDTO> result =
+                service.searchUsers("anna", "newestUser", pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1L, result.getContent().get(0).id());
+        assertEquals("anna", result.getContent().get(0).username());
+    }
+
+    @Test
+    void searchUsersUsesAlphabeticalStrategy() {
+        PageRequest pageable = PageRequest.of(0, 20);
+
+        PageRequest expectedPageable = PageRequest.of(
+                0, 20,
+                Sort.by(
+                        Sort.Order.asc("username"),
+                        Sort.Order.asc("id")
+                )
+        );
+
+        when(userRepository.findByUsernameContainingIgnoreCase(
+                eq(""), eq(expectedPageable)
+        )).thenReturn(Page.empty(expectedPageable));
+
+        service.searchUsers("", "alphabetical", pageable);
+
+        verify(userRepository).findByUsernameContainingIgnoreCase(
+                eq(""), eq(expectedPageable)
+        );
+    }
+
+    @Test
+    void searchUsersPreservesPagination() {
+        PageRequest pageable = PageRequest.of(2, 5);
+
+        PageRequest expectedPageable = PageRequest.of(
+                2, 5,
+                Sort.by(Sort.Order.desc("id"))
+        );
+
+        when(userRepository.findByUsernameContainingIgnoreCase(
+                eq("anna"), eq(expectedPageable)
+        )).thenReturn(Page.empty(expectedPageable));
+
+        Page<UserSearchResponseDTO> result =
+                service.searchUsers("anna", "newestUser", pageable);
+
+        assertEquals(2, result.getNumber());
+        assertEquals(5, result.getSize());
+
+        verify(userRepository).findByUsernameContainingIgnoreCase(
+                eq("anna"), eq(expectedPageable)
+        );
+    }
+
+    @Test
+    void searchUsersReturnsEmptyPageWhenNoMatches() {
+        PageRequest pageable = PageRequest.of(0, 20);
+
+        PageRequest sortedPageable = PageRequest.of(
+                0, 20, Sort.by(Sort.Order.desc("id"))
+        );
+
+        when(userRepository.findByUsernameContainingIgnoreCase(
+                eq("nonexistent"), eq(sortedPageable)
+        )).thenReturn(Page.empty(sortedPageable));
+
+        Page<UserSearchResponseDTO> result =
+                service.searchUsers("nonexistent", "newestUser", pageable);
+
+        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotalElements());
+    }
+
+    @Test
+    void searchUsersRejectsInvalidSortingStrategy() {
+        PageRequest pageable = PageRequest.of(0, 20);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> service.searchUsers("anna", "invalid", pageable)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+
+        verify(userRepository, never())
+                .findByUsernameContainingIgnoreCase(
+                        anyString(), any()
+                );
+    }
+  
     @Test
     void replacingProfilePictureDeletesOldFile() throws Exception {
         User user = new User();

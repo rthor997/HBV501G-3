@@ -4,6 +4,7 @@ import org.example.klifurapp.DTO.requests.AdminUpdateUserDTO;
 import org.example.klifurapp.DTO.requests.UpdateUserRequestDTO;
 import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
 import org.example.klifurapp.DTO.responses.UserResponseDTO;
+import org.example.klifurapp.DTO.responses.UserSearchResponseDTO;
 import org.example.klifurapp.entity.User;
 import org.example.klifurapp.exception.ConflictException;
 import org.example.klifurapp.exception.ResourceNotFoundException;
@@ -11,12 +12,21 @@ import org.example.klifurapp.repository.ClimbRepository;
 import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.service.ImageStorageService;
 import org.example.klifurapp.service.UserService;
+import org.example.klifurapp.strategy.SortingStrategy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.*;
 import java.io.IOException;
@@ -28,13 +38,19 @@ public class UserServiceImplementation implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final ImageStorageService imageStorage;
     private final ClimbRepository climbRepository;
+    private final Map<String, SortingStrategy> sortingStrategy;
 
     public UserServiceImplementation(UserRepository userRepository, PasswordEncoder passwordEncoder
-    , ImageStorageService imageStorage, ClimbRepository climbRepository) {
+    , ImageStorageService imageStorage, ClimbRepository climbRepository, List<SortingStrategy> sortingStrategy) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.imageStorage = imageStorage;
         this.climbRepository = climbRepository;
+        this.sortingStrategy = sortingStrategy.stream()
+                .collect(Collectors.toMap(
+                        SortingStrategy::getName,
+                        Function.identity()
+                ));
     }
 
     @Override
@@ -157,6 +173,47 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<UserSearchResponseDTO> searchUsers(
+            String search,
+            String sortBy,
+            Pageable pageable) {
+
+        SortingStrategy strategy = getUserSortingStrategy(sortBy);
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                strategy.getSort()
+        );
+
+        Page<User> users =
+                userRepository.findByUsernameContainingIgnoreCase(
+                        search == null ? "" : search.trim(),
+                        sortedPageable
+                );
+
+        return users.map(user ->
+                new UserSearchResponseDTO(
+                        user.getId(),
+                        user.getUsername()
+                )
+        );
+    }
+
+    private SortingStrategy getUserSortingStrategy(String sortBy) {
+        SortingStrategy strategy = sortingStrategy.get(sortBy);
+
+        if (strategy == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid sorting option: " + sortBy
+            );
+        }
+
+        return strategy;
+    }
+
     public String updateProfilePicture(
             Long userId,
             MultipartFile file
@@ -200,9 +257,7 @@ public class UserServiceImplementation implements UserService {
             try {
                 imageStorage.delete(oldFilename);
             } catch (IOException e) {
-                // Log the cleanup failure.
-                // The new image is still associated with the user.
-                System.err.println("" + e.getMessage());
+                System.err.println("User profile picture deletion failed" + e.getMessage());
             }
         }
 

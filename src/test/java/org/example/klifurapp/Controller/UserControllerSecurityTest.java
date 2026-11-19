@@ -7,6 +7,7 @@ import org.example.klifurapp.repository.UserRepository;
 import org.example.klifurapp.security.JwtAuthenticationFilter;
 import org.example.klifurapp.security.SecurityErrorWriter;
 import org.example.klifurapp.service.AuthService;
+import org.example.klifurapp.service.ImageStorageService;
 import org.example.klifurapp.service.JwtService;
 import org.example.klifurapp.service.UserService;
 import org.example.klifurapp.DTO.responses.PublicUserProfileResponseDTO;
@@ -25,7 +26,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,6 +41,7 @@ class UserControllerSecurityTest {
     @MockitoBean AuthService authService;
     @MockitoBean JwtService jwtService;
     @MockitoBean UserRepository userRepository;
+    @MockitoBean ImageStorageService imageStorage;
 
     @Test
     void publicRegistrationDoesNotRequireJwt() throws Exception {
